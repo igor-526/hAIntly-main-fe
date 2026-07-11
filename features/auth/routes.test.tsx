@@ -1,0 +1,20 @@
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { LoginRoute } from "./login-route";
+import { ProtectedHome } from "./protected-home";
+type Status = "checking" | "authenticated" | "anonymous" | "error";
+const replace = vi.fn();
+const auth: { status: Status; check: ReturnType<typeof vi.fn>; error?: string } = { status: "checking", check: vi.fn() };
+vi.mock("next/navigation",()=>({useRouter:()=>({replace})}));
+vi.mock("./auth-provider",()=>({useAuth:()=>auth}));
+vi.mock("./auth-form",()=>({AuthForm:()=> <div>Форма входа</div>}));
+describe("route gates",()=>{
+  beforeEach(()=>{replace.mockReset();auth.check.mockReset();auth.status="checking";delete auth.error});
+  it("скрывает home при checking",()=>{render(<ProtectedHome/>);expect(screen.queryByText("Главная страница скоро появится.")).not.toBeInTheDocument()});
+  it("перенаправляет гостя",async()=>{auth.status="anonymous";render(<ProtectedHome/>);await waitFor(()=>expect(replace).toHaveBeenCalledWith("/login"))});
+  it("показывает home пользователю",()=>{auth.status="authenticated";render(<ProtectedHome/>);expect(screen.getByText("Главная страница скоро появится.")).toBeInTheDocument()});
+  it("перенаправляет authenticated с login",async()=>{auth.status="authenticated";render(<LoginRoute/>);await waitFor(()=>expect(replace).toHaveBeenCalledWith("/"))});
+  it("показывает login гостю",()=>{auth.status="anonymous";render(<LoginRoute/>);expect(screen.getByText("Форма входа")).toBeInTheDocument()});
+  it("вызывает retry из protected error",async()=>{auth.status="error";auth.error="Сеть";render(<ProtectedHome/>);await userEvent.click(screen.getByRole("button",{name:"Повторить"}));expect(auth.check).toHaveBeenCalledOnce()});
+});

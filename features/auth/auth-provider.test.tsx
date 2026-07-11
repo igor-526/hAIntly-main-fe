@@ -1,0 +1,17 @@
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "@/lib/api-client";
+import { AuthProvider, useAuth } from "./auth-provider";
+import { authService } from "./service";
+import type { User } from "./types";
+vi.mock("./service",()=>({authService:{verify:vi.fn(),refresh:vi.fn()}}));
+const user: User={id:"u1",email:"t@example.test",roles:[]};
+const wrapper=({children}:{children:React.ReactNode})=><AuthProvider>{children}</AuthProvider>;
+describe("AuthProvider",()=>{
+ beforeEach(()=>{vi.mocked(authService.verify).mockReset();vi.mocked(authService.refresh).mockReset()});
+ it("аутентифицирует по действующей сессии без refresh",async()=>{vi.mocked(authService.verify).mockResolvedValue(user);const {result}=renderHook(()=>useAuth(),{wrapper});await waitFor(()=>expect(result.current.status).toBe("authenticated"));expect(authService.refresh).not.toHaveBeenCalled()});
+ it("выполняет один refresh и повторный verify",async()=>{vi.mocked(authService.verify).mockRejectedValueOnce(new ApiError("expired",401)).mockResolvedValueOnce(user);vi.mocked(authService.refresh).mockResolvedValue();const {result}=renderHook(()=>useAuth(),{wrapper});await waitFor(()=>expect(result.current.status).toBe("authenticated"));expect(authService.refresh).toHaveBeenCalledOnce();expect(authService.verify).toHaveBeenCalledTimes(2)});
+ it("делает invalid refresh anonymous без цикла",async()=>{vi.mocked(authService.verify).mockRejectedValue(new ApiError("expired",401));vi.mocked(authService.refresh).mockRejectedValue(new ApiError("invalid",401));const {result}=renderHook(()=>useAuth(),{wrapper});await waitFor(()=>expect(result.current.status).toBe("anonymous"));expect(authService.verify).toHaveBeenCalledOnce();expect(authService.refresh).toHaveBeenCalledOnce()});
+ it("объединяет параллельный refresh",async()=>{vi.mocked(authService.verify).mockResolvedValueOnce(user);let release!:()=>void;const pending=new Promise<void>(resolve=>{release=resolve});vi.mocked(authService.refresh).mockReturnValue(pending);const {result}=renderHook(()=>useAuth(),{wrapper});await waitFor(()=>expect(result.current.status).toBe("authenticated"));vi.mocked(authService.verify).mockRejectedValueOnce(new ApiError("expired",401)).mockRejectedValueOnce(new ApiError("expired",401)).mockResolvedValue(user);let first!:Promise<boolean>;let second!:Promise<boolean>;act(()=>{first=result.current.check();second=result.current.check()});await waitFor(()=>expect(authService.refresh).toHaveBeenCalledOnce());release();await act(async()=>{await Promise.all([first,second])});expect(authService.refresh).toHaveBeenCalledOnce()});
+ it("позволяет безопасный retry после network error",async()=>{vi.mocked(authService.verify).mockRejectedValueOnce(new ApiError("Сеть")).mockResolvedValueOnce(user);const {result}=renderHook(()=>useAuth(),{wrapper});await waitFor(()=>expect(result.current.status).toBe("error"));await act(async()=>{expect(await result.current.check()).toBe(true)});expect(result.current.status).toBe("authenticated")});
+});
