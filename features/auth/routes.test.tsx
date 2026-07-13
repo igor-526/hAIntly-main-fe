@@ -9,11 +9,12 @@ const auth: { status: Status; check: ReturnType<typeof vi.fn>; error?: string } 
 vi.mock("next/navigation",()=>({useRouter:()=>({replace})}));
 vi.mock("./auth-provider",()=>({useAuth:()=>auth}));
 vi.mock("./auth-form",()=>({AuthForm:()=> <div>Форма входа</div>}));
+vi.mock("@/features/hh-accounts/workspace",()=>({HhWorkspace:()=> <div>Рабочая область HH</div>}));
 describe("route gates",()=>{
   beforeEach(()=>{replace.mockReset();auth.check.mockReset();auth.status="checking";delete auth.error});
-  it("скрывает home при checking",()=>{render(<ProtectedHome/>);expect(screen.queryByText("Главная страница скоро появится.")).not.toBeInTheDocument()});
+  it("скрывает home при checking",()=>{render(<ProtectedHome/>);expect(screen.queryByText("Рабочая область HH")).not.toBeInTheDocument()});
   it("перенаправляет гостя",async()=>{auth.status="anonymous";render(<ProtectedHome/>);await waitFor(()=>expect(replace).toHaveBeenCalledWith("/login"))});
-  it("показывает home пользователю",()=>{auth.status="authenticated";render(<ProtectedHome/>);expect(screen.getByText("Главная страница скоро появится.")).toBeInTheDocument()});
+  it("показывает home пользователю",()=>{auth.status="authenticated";render(<ProtectedHome/>);expect(screen.getByText("Рабочая область HH")).toBeInTheDocument()});
   it("перенаправляет authenticated с login",async()=>{auth.status="authenticated";render(<LoginRoute/>);await waitFor(()=>expect(replace).toHaveBeenCalledWith("/"))});
   it("показывает login гостю",()=>{auth.status="anonymous";render(<LoginRoute/>);expect(screen.getByText("Форма входа")).toBeInTheDocument()});
   it("вызывает retry из protected error",async()=>{auth.status="error";auth.error="Сеть";render(<ProtectedHome/>);await userEvent.click(screen.getByRole("button",{name:"Повторить"}));expect(auth.check).toHaveBeenCalledOnce()});

@@ -1,7 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  trailingSlash: true,
+  async redirects() {
+    return [
+      {
+        source: "/hh/oauth/callback/",
+        destination: "/auth/hh/",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
