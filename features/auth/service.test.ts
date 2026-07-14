@@ -10,4 +10,5 @@ describe("auth service",()=>{
     expect(JSON.parse(String(vi.mocked(apiRequest).mock.calls[1][1]?.body))).not.toHaveProperty("login");
   });
   it("сохраняет orchestration refresh и verify",async()=>{await authService.refresh();await authService.verify();expect(vi.mocked(apiRequest).mock.calls.map(x=>x[0])).toEqual(["/api/auth/refresh","/api/auth/verify"])});
+  it("отправляет logout через существующий main-be endpoint",async()=>{await authService.logout();expect(apiRequest).toHaveBeenCalledWith("/api/auth/logout",{method:"POST"})});
 });

@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import { hhAccountService } from "./service";
 
 export function HhOAuthCallback() {
@@ -27,5 +28,5 @@ export function HhOAuthCallback() {
     void complete();
     return () => { active = false; };
   }, [queryString]);
-  return <main className="callback-page"><section role="status" className="callback-card"><h1>HAIntly</h1><p>{result.message}</p>{result.status === "error" && <button onClick={() => window.close()}>Закрыть окно</button>}</section></main>;
+  return <Box component="main" sx={{minHeight:"100vh",display:"grid",placeItems:"center",p:2,bgcolor:"background.default"}}><Paper role="status" sx={{p:4,maxWidth:520,textAlign:"center"}}><Stack spacing={2} sx={{alignItems:"center"}}>{result.status==="pending"&&<CircularProgress/>}<Typography variant="h4" color="primary" sx={{fontWeight:800}}>HAIntly</Typography>{result.status==="error"?<Alert severity="error">{result.message}</Alert>:<Typography>{result.message}</Typography>}{result.status === "error" && <Button variant="contained" onClick={() => window.close()}>Закрыть окно</Button>}</Stack></Paper></Box>;
 }

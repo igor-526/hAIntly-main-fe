@@ -1,141 +1,81 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
+
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
+import { Alert, AppBar, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Drawer, FormControl, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, Paper, Select, Stack, Toolbar, Tooltip, Typography } from "@mui/material";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/features/auth/auth-provider";
 import { useHhAccounts } from "./use-hh-accounts";
 import type { HhAccount } from "./types";
 
 const accountName = (account: HhAccount) => account.display_name ?? account.email ?? `HH ${account.hh_user_id}`;
 
-type AccountMenuProps = {
-  accounts: HhAccount[];
-  active: HhAccount;
-  pending: boolean;
-  connect: () => Promise<void>;
-  select: (id: string) => Promise<void>;
-  remove: (id: string) => Promise<boolean>;
-  triggerRef: React.RefObject<HTMLButtonElement | null>;
-  onDeleteSuccess: () => void;
+type AccountsDrawerProps = {
+  accounts: HhAccount[]; active: HhAccount; pending: boolean; error?: string;
+  connect: () => Promise<void>; select: (id: string) => Promise<void>; remove: (id: string) => Promise<boolean>;
 };
 
-function AccountMenu({ accounts, active, pending, connect, select, remove, triggerRef, onDeleteSuccess }: AccountMenuProps) {
+function AccountsDrawer({ accounts, active, pending, error, connect, select, remove }: AccountsDrawerProps) {
   const [open, setOpen] = useState(false);
-  const [confirming, setConfirming] = useState(false);
+  const [target, setTarget] = useState<HhAccount | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const deleteInFlight = useRef(false);
-  const root = useRef<HTMLDivElement>(null);
-  const cancel = useRef<HTMLButtonElement>(null);
-  const menuId = useId();
-  const titleId = useId();
-  const descriptionId = useId();
-  const closeMenu = (restoreFocus = true) => {
-    setOpen(false);
-    if (restoreFocus) requestAnimationFrame(() => triggerRef.current?.focus());
-  };
-  const closeDialog = () => {
-    if (deleteInFlight.current) return;
-    setConfirming(false);
-    setSubmitting(false);
-    requestAnimationFrame(() => triggerRef.current?.focus());
-  };
+  const trigger = useRef<HTMLButtonElement>(null);
+  const closeDrawer = () => { if (!pending) setOpen(false); };
+  const closeDialog = () => { if (!deleteInFlight.current && !pending) setTarget(null); };
   const confirmDelete = async () => {
-    if (deleteInFlight.current) return;
-    deleteInFlight.current = true;
-    setSubmitting(true);
-    const removed = await remove(active.id);
-    deleteInFlight.current = false;
-    setSubmitting(false);
-    if (removed) { setConfirming(false); onDeleteSuccess(); }
+    if (!target || deleteInFlight.current) return;
+    deleteInFlight.current = true; setSubmitting(true);
+    const removed = await remove(target.id);
+    deleteInFlight.current = false; setSubmitting(false);
+    if (removed) setTarget(null);
   };
-  const openMenu = () => {
-    if (pending) return;
-    setOpen(true);
-    requestAnimationFrame(() => root.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus());
-  };
-  useEffect(() => {
-    if (!open) return;
-    const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
-    document.addEventListener("pointerdown", outside);
-    return () => document.removeEventListener("pointerdown", outside);
-  }, [open]);
-  useEffect(() => {
-    if (confirming) requestAnimationFrame(() => cancel.current?.focus());
-  }, [confirming]);
-
-  const menuKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    const items = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)'));
-    const index = items.indexOf(document.activeElement as HTMLButtonElement);
-    let next = -1;
-    if (event.key === "ArrowDown") next = (index + 1) % items.length;
-    if (event.key === "ArrowUp") next = (index - 1 + items.length) % items.length;
-    if (event.key === "Home") next = 0;
-    if (event.key === "End") next = items.length - 1;
-    if (next >= 0) { event.preventDefault(); items[next]?.focus(); }
-    if (event.key === "Escape") { event.preventDefault(); closeMenu(); }
-  };
-  const dialogKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === "Escape" && !pending && !submitting) { event.preventDefault(); closeDialog(); }
-    if (event.key !== "Tab") return;
-    const controls = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button:not(:disabled)"));
-    if (!controls.length) return;
-    const index = controls.indexOf(document.activeElement as HTMLButtonElement);
-    const next = event.shiftKey ? (index <= 0 ? controls.length - 1 : index - 1) : (index === controls.length - 1 ? 0 : index + 1);
-    event.preventDefault(); controls[next]?.focus();
-  };
-
   return <>
-    <div className="account-menu" ref={root}>
-      <button ref={triggerRef} className="account-trigger" type="button" aria-label={`Активный аккаунт HH: ${accountName(active)}`} aria-expanded={open} aria-haspopup="menu" aria-controls={open ? menuId : undefined} disabled={pending} onClick={() => open ? closeMenu(false) : openMenu()} onKeyDown={(event) => { if (!open && ["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) { event.preventDefault(); openMenu(); } }}>
-        <span><small>Аккаунт HH</small>{accountName(active)}</span><span aria-hidden="true">{open ? "▴" : "▾"}</span>
-      </button>
-      {open && <div id={menuId} className="account-dropdown" role="menu" aria-label="Управление аккаунтами HH" onKeyDown={menuKeyDown}>
-        <div className="account-list" role="group" aria-label="Подключённые профили">
-          {accounts.map((account) => <button key={account.id} type="button" role="menuitem" className="account-option" aria-current={account.id === active.id ? "true" : undefined} disabled={pending} onClick={() => { if (account.id !== active.id) void select(account.id); closeMenu(false); }}><span>{accountName(account)}</span>{account.id === active.id && <span className="active-mark">Активен</span>}</button>)}
-        </div>
-        <div className="account-menu-actions">
-          <button type="button" role="menuitem" disabled={pending} onClick={() => { closeMenu(false); void connect(); }}>Добавить аккаунт</button>
-          <button type="button" role="menuitem" className="menu-danger" disabled={pending} onClick={() => { setOpen(false); setConfirming(true); }}>Удалить аккаунт</button>
-        </div>
-      </div>}
-    </div>
-    {confirming && <div className="modal-overlay" role="presentation" onPointerDown={(event) => { if (event.target === event.currentTarget && !pending && !submitting) closeDialog(); }}>
-      <div className="delete-dialog" role="dialog" aria-modal="true" aria-labelledby={titleId} aria-describedby={descriptionId} onKeyDown={dialogKeyDown}>
-        <h2 id={titleId}>Удалить аккаунт HH?</h2>
-        <p id={descriptionId}>Профиль «{accountName(active)}» будет отвязан от HAIntly. Это действие нельзя отменить.</p>
-        <div className="dialog-actions"><button ref={cancel} type="button" className="secondary" disabled={pending || submitting} onClick={closeDialog}>Отмена</button><button type="button" className="danger-solid" disabled={pending || submitting} onClick={() => void confirmDelete()}>{pending || submitting ? "Удаляем…" : "Удалить"}</button></div>
-      </div>
-    </div>}
+    <Button ref={trigger} color="inherit" variant="outlined" aria-label={`Активный аккаунт HH: ${accountName(active)}`} aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen(true)} disabled={pending} sx={{ textTransform:"none" }}>
+      HH: {accountName(active)}
+    </Button>
+    <Drawer anchor="top" open={open} onClose={(_, reason) => { if (!pending && (reason === "escapeKeyDown" || reason === "backdropClick")) closeDrawer(); }} slotProps={{ transition: { onExited: () => trigger.current?.focus() } }}>
+      <Box role="dialog" aria-label="Управление аккаунтами HH" sx={{ width:"100%", maxWidth:960, mx:"auto", p:{xs:2,sm:3} }}>
+        <Stack direction="row" sx={{justifyContent:"space-between",alignItems:"center",mb:1}}><Typography variant="h6">Аккаунты HeadHunter</Typography><IconButton aria-label="Закрыть управление аккаунтами HH" disabled={pending} onClick={closeDrawer}>×</IconButton></Stack>
+        {error && <Alert severity="error" sx={{mb:1}}>{error}</Alert>}
+        <List aria-label="Подключённые профили">
+          {accounts.map(account => <ListItem key={account.id} disablePadding secondaryAction={<Button color="error" disabled={pending} onClick={() => setTarget(account)}>Удалить</Button>}>
+            <ListItemButton selected={account.id === active.id} disabled={pending} onClick={() => { if (account.id !== active.id) void select(account.id); }}>
+              <Avatar src={account.avatar_url ?? undefined} sx={{mr:2}}>{accountName(account).slice(0,1)}</Avatar><ListItemText primary={accountName(account)} secondary={account.email}/>{account.id === active.id && <Chip label="Активен" color="primary" size="small" sx={{mr:8}}/>}
+            </ListItemButton>
+          </ListItem>)}
+        </List>
+        <Divider sx={{my:2}}/><Stack direction={{xs:"column",sm:"row"}} sx={{gap:1}}><Button variant="contained" disabled={pending} onClick={() => { setOpen(false); void connect(); }}>Добавить аккаунт</Button><Button disabled={pending} onClick={closeDrawer}>Закрыть</Button></Stack>
+      </Box>
+    </Drawer>
+    <Dialog open={!!target} onClose={(_, reason) => { if (reason !== "backdropClick" || !submitting) closeDialog(); }} disableEscapeKeyDown={submitting || pending} aria-labelledby="delete-account-title">
+      <DialogTitle id="delete-account-title">Удалить аккаунт HH?</DialogTitle>
+      <DialogContent><DialogContentText>Профиль «{target ? accountName(target) : ""}» будет отвязан от HAIntly. Это действие нельзя отменить.</DialogContentText>{error && <Alert severity="error" sx={{mt:2}}>{error}</Alert>}</DialogContent>
+      <DialogActions><Button disabled={submitting || pending} onClick={closeDialog}>Отмена</Button><Button color="error" variant="contained" disabled={submitting || pending} onClick={() => void confirmDelete()}>{submitting || pending ? "Удаляем…" : "Удалить"}</Button></DialogActions>
+    </Dialog>
   </>;
 }
 
 function WorkspaceShell() {
-  const root = useRef<HTMLDivElement>(null);
-  const [left, setLeft] = useState(46);
-  const resize = (next: number) => setLeft(Math.max(32, Math.min(68, next)));
-  return <section ref={root} className="workspace" style={{ "--left-pane": `${left}%` } as React.CSSProperties}>
-    <article className="workspace-pane vacancies-pane"><div className="panel-heading"><div><span className="eyebrow">Поиск работы</span><h2>Вакансии</h2></div><button disabled>Фильтры</button></div><label>Резюме<select disabled><option>Резюме появятся на следующем этапе</option></select></label><div className="shell-empty"><strong>Список вакансий пока пуст</strong><span>Сбор вакансий будет доступен в следующем обновлении.</span></div></article>
-    <div className="resizer" role="separator" aria-label="Изменить ширину панелей" aria-orientation="vertical" tabIndex={0}
-      onPointerDown={(event) => { const element = root.current; if (!element) return; event.currentTarget.setPointerCapture(event.pointerId); const move = (moveEvent: PointerEvent) => resize(((moveEvent.clientX - element.getBoundingClientRect().left) / element.clientWidth) * 100); const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); }; window.addEventListener("pointermove", move); window.addEventListener("pointerup", up); }}
-      onKeyDown={(event) => { if (event.key === "ArrowLeft") resize(left - 4); if (event.key === "ArrowRight") resize(left + 4); }} />
-    <article className="workspace-pane details-pane"><div><span className="eyebrow">Карточка вакансии</span><h2>Информация и AI</h2></div><div className="shell-empty"><strong>Выберите вакансию</strong><span>Здесь появятся детали, оценка релевантности и сопроводительное письмо.</span></div><div className="ai-actions"><button disabled>Оценить релевантность</button><button disabled>Создать письмо</button></div></article>
-  </section>;
+  const root = useRef<HTMLDivElement>(null); const [left, setLeft] = useState(46); const resize=(next:number)=>setLeft(Math.max(32,Math.min(68,next)));
+  return <Box ref={root} component="section" sx={{ flex:1, display:{xs:"flex",md:"grid"}, flexDirection:"column", gridTemplateColumns:`minmax(20rem,${left}%) .6rem minmax(20rem,1fr)`, p:2, overflow:"auto", gap:{xs:2,md:0} }}>
+    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"12px 0 0 12px"}}}><Stack direction="row" sx={{justifyContent:"space-between"}}><Box><Typography variant="overline" color="primary">Поиск работы</Typography><Typography variant="h5">Вакансии</Typography></Box><Button disabled>Фильтры</Button></Stack><FormControl fullWidth sx={{mt:2}}><Select disabled value="future"><MenuItem value="future">Резюме появятся на следующем этапе</MenuItem></Select></FormControl><Empty title="Список вакансий пока пуст" text="Сбор вакансий будет доступен в следующем обновлении."/></Paper>
+    <Box role="separator" aria-label="Изменить ширину панелей" aria-orientation="vertical" tabIndex={0} sx={{display:{xs:"none",md:"block"},cursor:"col-resize",bgcolor:"primary.100"}} onPointerDown={event=>{const el=root.current;if(!el)return;event.currentTarget.setPointerCapture(event.pointerId);const move=(e:PointerEvent)=>resize(((e.clientX-el.getBoundingClientRect().left)/el.clientWidth)*100);const up=()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up)};window.addEventListener("pointermove",move);window.addEventListener("pointerup",up)}} onKeyDown={e=>{if(e.key==="ArrowLeft")resize(left-4);if(e.key==="ArrowRight")resize(left+4)}}/>
+    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"0 12px 12px 0"},display:"flex",flexDirection:"column"}}><Typography variant="overline" color="primary">Карточка вакансии</Typography><Typography variant="h5">Информация и AI</Typography><Empty title="Выберите вакансию" text="Здесь появятся детали, оценка релевантности и сопроводительное письмо."/><Stack direction="row" sx={{gap:1,flexWrap:"wrap"}}><Button disabled>Оценить релевантность</Button><Button disabled>Создать письмо</Button></Stack></Paper>
+  </Box>;
 }
+function Empty({title,text}:{title:string;text:string}){return <Stack sx={{alignItems:"center",justifyContent:"center",textAlign:"center",minHeight:190,flex:1,color:"text.secondary"}}><Typography color="text.primary" sx={{fontWeight:700}}>{title}</Typography><Typography>{text}</Typography></Stack>}
 
 export function HhWorkspace() {
-  const hh = useHhAccounts();
-  const active = hh.accounts.find((account) => account.id === hh.activeId);
-  const accountTrigger = useRef<HTMLButtonElement>(null);
-  const [restoreAccountFocus, setRestoreAccountFocus] = useState(false);
-  useEffect(() => {
-    if (!restoreAccountFocus || hh.loading || !active || !accountTrigger.current) return;
-    accountTrigger.current.focus();
-    setRestoreAccountFocus(false);
-  }, [restoreAccountFocus, hh.loading, active]);
-  return <div className="app-shell">
-    <header className="app-header"><Link className="brand" href="/">HAIntly</Link><div className="header-actions">
-      {hh.loading ? <span role="status">Загружаем HH…</span> : hh.accounts.length === 0 ? <button disabled={hh.pending} onClick={hh.connect}>{hh.pending ? "Открываем HH…" : "Войти через HH"}</button> : active ? <AccountMenu accounts={hh.accounts} active={active} pending={hh.pending} connect={hh.connect} select={hh.select} remove={hh.remove} triggerRef={accountTrigger} onDeleteSuccess={() => setRestoreAccountFocus(true)} /> : null}
-      <details className="profile-menu"><summary aria-label="Меню профиля">Профиль</summary><div><button disabled>Настройки</button><button disabled>Выход</button></div></details>
-    </div></header>
-    {hh.error && <div className="error-banner" role="alert"><span>{hh.error}</span><button onClick={() => void hh.load()}>Повторить</button></div>}
-    {!hh.loading && !active ? <main className="connect-empty"><span className="eyebrow">Начало работы</span><h1>Подключите аккаунт HeadHunter</h1><p>После подключения здесь появится рабочая область с резюме и вакансиями.</p><button disabled={hh.pending} onClick={hh.connect}>{hh.pending ? "Открываем HH…" : "Подключить HH"}</button></main> : active ? <WorkspaceShell /> : null}
-  </div>;
+  const hh=useHhAccounts(); const auth=useAuth(); const router=useRouter(); const active=hh.accounts.find(a=>a.id===hh.activeId); const [profileAnchor,setProfileAnchor]=useState<HTMLElement|null>(null);
+  useEffect(()=>{if(auth.status==="anonymous")router.replace("/login")},[auth.status,router]);
+  return <Box sx={{minHeight:"100vh",display:"flex",flexDirection:"column",bgcolor:"background.default"}}>
+    <AppBar position="static" color="inherit" elevation={0} sx={{borderBottom:1,borderColor:"divider"}}><Toolbar sx={{gap:1}}><Typography component={Link} href="/" variant="h5" color="primary" sx={{fontWeight:800,textDecoration:"none",flexGrow:1}}>HAIntly</Typography>
+      {hh.loading?<Typography role="status">Загружаем HH…</Typography>:hh.accounts.length===0?<Button variant="contained" disabled={hh.pending} onClick={hh.connect}>{hh.pending?"Открываем HH…":"Войти через HH"}</Button>:active?<AccountsDrawer accounts={hh.accounts} active={active} pending={hh.pending} error={hh.error} connect={hh.connect} select={hh.select} remove={hh.remove}/>:null}
+      <Tooltip title="Меню профиля"><IconButton aria-label="Меню профиля" onClick={e=>setProfileAnchor(e.currentTarget)}><Avatar sx={{width:34,height:34}}>П</Avatar></IconButton></Tooltip><Menu anchorEl={profileAnchor} open={!!profileAnchor} onClose={()=>setProfileAnchor(null)}><MenuItem disabled>Настройки</MenuItem><MenuItem disabled={auth.logoutPending} onClick={()=>{setProfileAnchor(null);void auth.logout()}}>{auth.logoutPending?"Выходим…":"Выход"}</MenuItem></Menu>
+    </Toolbar></AppBar>
+    {auth.logoutError&&<Alert severity="error" action={<Button color="inherit" disabled={auth.logoutPending} onClick={()=>void auth.logout()}>Повторить выход</Button>}>{auth.logoutError}</Alert>}
+    {hh.error&&!active&&<Alert severity="error" action={<Button color="inherit" onClick={()=>void hh.load()}>Повторить</Button>}>{hh.error}</Alert>}
+    {!hh.loading&&!active?<Stack component="main" spacing={2} sx={{alignItems:"center",justifyContent:"center",textAlign:"center",m:"auto",p:3,maxWidth:600}}><Typography variant="overline" color="primary">Начало работы</Typography><Typography variant="h3">Подключите аккаунт HeadHunter</Typography><Typography color="text.secondary">После подключения здесь появится рабочая область с резюме и вакансиями.</Typography><Button variant="contained" disabled={hh.pending} onClick={hh.connect}>{hh.pending?"Открываем HH…":"Подключить HH"}</Button></Stack>:active?<WorkspaceShell/>:null}
+  </Box>;
 }
