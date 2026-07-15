@@ -1,12 +1,12 @@
 {
-  "name": "my-app",
+  "name": "haintly-main-fe",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3101",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint src",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -14,6 +14,7 @@
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.10",
     "@mui/material": "^7.3.10",
     "@mui/material-nextjs": "^7.3.10",
     "next": "16.2.10",
@@ -29,6 +30,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "eslint-plugin-sonarjs": "^3.0.5",
+    "eslint-plugin-unicorn": "^62.0.0",
     "jsdom": "^29.1.1",
     "typescript": "^5",
     "vitest": "^3.2.4"
