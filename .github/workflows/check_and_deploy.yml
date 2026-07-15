@@ -6,7 +6,7 @@ on:
       - release
 
 env:
-  IMAGE: ghcr.io/igor-526/huntly_main-fe
+  IMAGE: ghcr.io/igor-526/haintly_main-fe
 
 jobs:
   # test:
