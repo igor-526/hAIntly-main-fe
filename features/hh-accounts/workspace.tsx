@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Alert, AppBar, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Drawer, FormControl, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, Paper, Select, Stack, Toolbar, Tooltip, Typography } from "@mui/material";
+import FilterListIcon from "@mui/icons-material/FilterList";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useHhAccounts } from "./use-hh-accounts";
+import { FilterDrawer } from "@/features/filters/filter-drawer";
 import type { HhAccount } from "./types";
 
 const accountName = (account: HhAccount) => account.display_name ?? account.email ?? `HH ${account.hh_user_id}`;
@@ -58,8 +60,10 @@ function AccountsDrawer({ accounts, active, pending, error, connect, select, rem
 
 function WorkspaceShell() {
   const root = useRef<HTMLDivElement>(null); const [left, setLeft] = useState(46); const resize=(next:number)=>setLeft(Math.max(32,Math.min(68,next)));
+  const [filtersOpen, setFiltersOpen] = useState(false);
   return <Box ref={root} component="section" sx={{ flex:1, display:{xs:"flex",md:"grid"}, flexDirection:"column", gridTemplateColumns:`minmax(20rem,${left}%) .6rem minmax(20rem,1fr)`, p:2, overflow:"auto", gap:{xs:2,md:0} }}>
-    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"12px 0 0 12px"}}}><Stack direction="row" sx={{justifyContent:"space-between"}}><Box><Typography variant="overline" color="primary">Поиск работы</Typography><Typography variant="h5">Вакансии</Typography></Box><Button disabled>Фильтры</Button></Stack><FormControl fullWidth sx={{mt:2}}><Select disabled value="future"><MenuItem value="future">Резюме появятся на следующем этапе</MenuItem></Select></FormControl><Empty title="Список вакансий пока пуст" text="Сбор вакансий будет доступен в следующем обновлении."/></Paper>
+    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"12px 0 0 12px"}}}><Stack direction="row" sx={{justifyContent:"space-between"}}><Box><Typography variant="overline" color="primary">Поиск работы</Typography><Typography variant="h5">Вакансии</Typography></Box><Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setFiltersOpen(true)} sx={{ textTransform: "none" }}>Фильтры</Button></Stack><FormControl fullWidth sx={{mt:2}}><Select disabled value="future"><MenuItem value="future">Резюме появятся на следующем этапе</MenuItem></Select></FormControl><Empty title="Список вакансий пока пуст" text="Сбор вакансий будет доступен в следующем обновлении."/></Paper>
+    <FilterDrawer open={filtersOpen} onClose={() => setFiltersOpen(false)} />
     <Box role="separator" aria-label="Изменить ширину панелей" aria-orientation="vertical" tabIndex={0} sx={{display:{xs:"none",md:"block"},cursor:"col-resize",bgcolor:"primary.100"}} onPointerDown={event=>{const el=root.current;if(!el)return;event.currentTarget.setPointerCapture(event.pointerId);const move=(e:PointerEvent)=>resize(((e.clientX-el.getBoundingClientRect().left)/el.clientWidth)*100);const up=()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up)};window.addEventListener("pointermove",move);window.addEventListener("pointerup",up)}} onKeyDown={e=>{if(e.key==="ArrowLeft")resize(left-4);if(e.key==="ArrowRight")resize(left+4)}}/>
     <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"0 12px 12px 0"},display:"flex",flexDirection:"column"}}><Typography variant="overline" color="primary">Карточка вакансии</Typography><Typography variant="h5">Информация и AI</Typography><Empty title="Выберите вакансию" text="Здесь появятся детали, оценка релевантности и сопроводительное письмо."/><Stack direction="row" sx={{gap:1,flexWrap:"wrap"}}><Button disabled>Оценить релевантность</Button><Button disabled>Создать письмо</Button></Stack></Paper>
   </Box>;
