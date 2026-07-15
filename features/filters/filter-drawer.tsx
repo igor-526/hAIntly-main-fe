@@ -11,14 +11,15 @@ import { PresetSelector } from "./preset-selector";
 import { FilterForm } from "./filter-form";
 import { PresetModal } from "./preset-modal";
 import { DeleteConfirmModal } from "./delete-confirm-modal";
-import type { FilterPresetListItem } from "./types";
+import type { FilterPresetFormData, FilterPresetListItem } from "./types";
 
 type FilterDrawerProps = {
   open: boolean;
   onClose: () => void;
+  onApply?: (form: FilterPresetFormData, presetId: string | null) => void;
 };
 
-export function FilterDrawer({ open, onClose }: FilterDrawerProps) {
+export function FilterDrawer({ open, onClose, onApply }: FilterDrawerProps) {
   const filters = useFilters();
   const presetsLoaded = useRef(false);
   const [presetModal, setPresetModal] = useState<{ open: boolean; initialName: string; mode: "create" | "rename"; targetId?: string }>({ open: false, initialName: "", mode: "create" });
@@ -126,6 +127,7 @@ export function FilterDrawer({ open, onClose }: FilterDrawerProps) {
                 startIcon={<SearchIcon />}
                 disabled={filters.saving}
                 fullWidth
+                onClick={() => onApply?.(filters.form, filters.selectedPresetId)}
               >
                 Применить
               </Button>

@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import { Alert, AppBar, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Drawer, FormControl, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, Paper, Select, Stack, Toolbar, Tooltip, Typography } from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, AppBar, Avatar, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Menu, MenuItem, Paper, Stack, Toolbar, Tooltip, Typography } from "@mui/material";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useHhAccounts } from "./use-hh-accounts";
 import { FilterDrawer } from "@/features/filters/filter-drawer";
+import { useVacancySearch } from "@/features/vacancies/use-vacancy-search";
+import { VacancyList } from "@/features/vacancies/vacancy-list";
+import { VacancyDetailPanel } from "@/features/vacancies/vacancy-detail";
+import { formDataToPayload } from "@/features/filters/types";
 import type { HhAccount } from "./types";
+import type { FilterPresetFormData } from "@/features/filters/types";
 
 const accountName = (account: HhAccount) => account.display_name ?? account.email ?? `HH ${account.hh_user_id}`;
 
@@ -61,14 +66,56 @@ function AccountsDrawer({ accounts, active, pending, error, connect, select, rem
 function WorkspaceShell() {
   const root = useRef<HTMLDivElement>(null); const [left, setLeft] = useState(46); const resize=(next:number)=>setLeft(Math.max(32,Math.min(68,next)));
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const vacancySearch = useVacancySearch();
+
+  const handleApplyFilters = useCallback((form: FilterPresetFormData, presetId: string | null) => {
+    const payload = formDataToPayload(form);
+    const params: Record<string, string | string[]> = {};
+    if (presetId) params.preset_id = presetId;
+    for (const [key, value] of Object.entries(payload)) {
+      if (value !== undefined && value !== null && key !== "name") {
+        if (Array.isArray(value)) {
+          if (value.length > 0) params[key] = value;
+        } else {
+          params[key] = String(value);
+        }
+      }
+    }
+    setFiltersOpen(false);
+    void vacancySearch.search(params);
+  }, [vacancySearch]);
+
   return <Box ref={root} component="section" sx={{ flex:1, display:{xs:"flex",md:"grid"}, flexDirection:"column", gridTemplateColumns:`minmax(20rem,${left}%) .6rem minmax(20rem,1fr)`, p:2, overflow:"auto", gap:{xs:2,md:0} }}>
-    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"12px 0 0 12px"}}}><Stack direction="row" sx={{justifyContent:"space-between"}}><Box><Typography variant="overline" color="primary">Поиск работы</Typography><Typography variant="h5">Вакансии</Typography></Box><Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setFiltersOpen(true)} sx={{ textTransform: "none" }}>Фильтры</Button></Stack><FormControl fullWidth sx={{mt:2}}><Select disabled value="future"><MenuItem value="future">Резюме появятся на следующем этапе</MenuItem></Select></FormControl><Empty title="Список вакансий пока пуст" text="Сбор вакансий будет доступен в следующем обновлении."/></Paper>
-    <FilterDrawer open={filtersOpen} onClose={() => setFiltersOpen(false)} />
+    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"12px 0 0 12px"},display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Stack direction="row" sx={{justifyContent:"space-between",mb:1}}>
+        <Box><Typography variant="overline" color="primary">Поиск работы</Typography><Typography variant="h5">Вакансии</Typography></Box>
+        <Button variant="outlined" startIcon={<FilterListIcon />} onClick={() => setFiltersOpen(true)} sx={{ textTransform: "none" }}>Фильтры</Button>
+      </Stack>
+      <VacancyList
+        vacancies={vacancySearch.vacancies}
+        selectedId={vacancySearch.selectedId}
+        loading={vacancySearch.loading}
+        loadingMore={vacancySearch.loadingMore}
+        hasMore={vacancySearch.hasMore}
+        error={vacancySearch.error}
+        onSelect={vacancySearch.select}
+        onLoadMore={vacancySearch.loadMore}
+        onRetry={() => vacancySearch.search()}
+      />
+    </Paper>
+    <FilterDrawer open={filtersOpen} onClose={() => setFiltersOpen(false)} onApply={handleApplyFilters} />
     <Box role="separator" aria-label="Изменить ширину панелей" aria-orientation="vertical" tabIndex={0} sx={{display:{xs:"none",md:"block"},cursor:"col-resize",bgcolor:"primary.100"}} onPointerDown={event=>{const el=root.current;if(!el)return;event.currentTarget.setPointerCapture(event.pointerId);const move=(e:PointerEvent)=>resize(((e.clientX-el.getBoundingClientRect().left)/el.clientWidth)*100);const up=()=>{window.removeEventListener("pointermove",move);window.removeEventListener("pointerup",up)};window.addEventListener("pointermove",move);window.addEventListener("pointerup",up)}} onKeyDown={e=>{if(e.key==="ArrowLeft")resize(left-4);if(e.key==="ArrowRight")resize(left+4)}}/>
-    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"0 12px 12px 0"},display:"flex",flexDirection:"column"}}><Typography variant="overline" color="primary">Карточка вакансии</Typography><Typography variant="h5">Информация и AI</Typography><Empty title="Выберите вакансию" text="Здесь появятся детали, оценка релевантности и сопроводительное письмо."/><Stack direction="row" sx={{gap:1,flexWrap:"wrap"}}><Button disabled>Оценить релевантность</Button><Button disabled>Создать письмо</Button></Stack></Paper>
+    <Paper component="article" variant="outlined" sx={{p:2,borderRadius:{xs:2,md:"0 12px 12px 0"},display:"flex",flexDirection:"column",overflow:"hidden"}}>
+      <Typography variant="overline" color="primary">Карточка вакансии</Typography>
+      <Typography variant="h5" sx={{mb:1}}>Информация и AI</Typography>
+      <VacancyDetailPanel vacancy={vacancySearch.vacancy} loading={vacancySearch.loadingDetail} selectedId={vacancySearch.selectedId} />
+      <Stack direction="row" sx={{gap:1,flexWrap:"wrap",mt:1}}>
+        <Button disabled>Оценить релевантность</Button>
+        <Button disabled>Создать письмо</Button>
+      </Stack>
+    </Paper>
   </Box>;
 }
-function Empty({title,text}:{title:string;text:string}){return <Stack sx={{alignItems:"center",justifyContent:"center",textAlign:"center",minHeight:190,flex:1,color:"text.secondary"}}><Typography color="text.primary" sx={{fontWeight:700}}>{title}</Typography><Typography>{text}</Typography></Stack>}
 
 export function HhWorkspace() {
   const hh=useHhAccounts(); const auth=useAuth(); const router=useRouter(); const active=hh.accounts.find(a=>a.id===hh.activeId); const [profileAnchor,setProfileAnchor]=useState<HTMLElement|null>(null);
