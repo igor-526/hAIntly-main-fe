@@ -6,6 +6,12 @@
 # Исключаем другие ненужные файлы
 node_modules
 .next
+out
+build
+coverage
+*.tsbuildinfo
+.turbo
+.cache
 .git
 .gitignore
 *.md

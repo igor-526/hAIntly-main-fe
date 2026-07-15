@@ -24,6 +24,8 @@ WORKDIR /app
 ARG PORT=3101
 ENV PORT=${PORT}
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.next ./.next
