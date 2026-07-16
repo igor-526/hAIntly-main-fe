@@ -1,3 +1,30 @@
 "use client";
-import { useEffect } from "react"; import { useRouter } from "next/navigation"; import { Box } from "@mui/material"; import { useAuth } from "@/contexts/auth-context"; import { Status } from "@/ui/status"; import { AuthForm } from "./auth-form";
-export function LoginPageFeature() { const auth=useAuth(); const router=useRouter(); useEffect(()=>{if(auth.status==="authenticated") router.replace("/");},[auth.status,router]); if(auth.status==="checking"||auth.status==="authenticated") return <Status text="Проверяем сессию…"/>; if(auth.status==="error") return <Status text={auth.error || "Ошибка"} retry={auth.check}/>; return <Box component="main" sx={{ minHeight:"100vh", display:"grid", placeItems:"center", bgcolor:"background.default", p:2 }}><AuthForm/></Box>; }
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Box } from "@mui/material";
+import { useAuth } from "@/contexts/auth-context";
+import { Status } from "@/ui/status";
+import { AuthForm } from "./auth-form";
+export function LoginPageFeature() {
+  const auth = useAuth();
+  const router = useRouter();
+  useEffect(() => {
+    if (auth.status === "authenticated") router.replace("/");
+  }, [auth.status, router]);
+  if (auth.status === "checking" || auth.status === "authenticated") return <Status text="Проверяем сессию…" />;
+  if (auth.status === "error") return <Status text={auth.error || "Ошибка"} retry={auth.check} />;
+  return (
+    <Box
+      component="main"
+      sx={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        bgcolor: "background.default",
+        p: 2,
+      }}
+    >
+      <AuthForm />
+    </Box>
+  );
+}

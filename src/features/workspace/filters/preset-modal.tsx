@@ -28,7 +28,14 @@ export function PresetModal({ open, initialName = "", saving, onSave, onClose }:
   };
 
   return (
-    <Dialog open={open} onClose={(_, reason) => { if (reason !== "backdropClick" || !saving) onClose(); }} disableEscapeKeyDown={saving} aria-labelledby="preset-modal-title">
+    <Dialog
+      open={open}
+      onClose={(_, reason) => {
+        if (reason !== "backdropClick" || !saving) onClose();
+      }}
+      disableEscapeKeyDown={saving}
+      aria-labelledby="preset-modal-title"
+    >
       <DialogTitle id="preset-modal-title">{initialName ? "Переименовать пресет" : "Создать пресет"}</DialogTitle>
       <DialogContent>
         <TextField
@@ -36,7 +43,9 @@ export function PresetModal({ open, initialName = "", saving, onSave, onClose }:
           label="Название пресета"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => { if (e.key === "Enter") void handleSave(); }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void handleSave();
+          }}
           fullWidth
           margin="dense"
           disabled={saving}
@@ -44,7 +53,9 @@ export function PresetModal({ open, initialName = "", saving, onSave, onClose }:
         />
       </DialogContent>
       <DialogActions>
-        <Button disabled={saving} onClick={onClose}>Отмена</Button>
+        <Button disabled={saving} onClick={onClose}>
+          Отмена
+        </Button>
         <Button variant="contained" disabled={saving || !name.trim()} onClick={() => void handleSave()}>
           {saving ? "Сохраняем…" : "Сохранить"}
         </Button>

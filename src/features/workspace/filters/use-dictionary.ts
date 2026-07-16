@@ -10,15 +10,23 @@ const initialState: DictionaryState = { items: [], loading: false };
 function useDictionaryLoader(loadItems: (query?: string) => Promise<DictionaryItem[]>) {
   const [state, setState] = useState<DictionaryState>(initialState);
   const loaded = useRef(false);
-  const load = useCallback(async (query?: string) => {
-    setState((value) => ({ ...value, loading: true }));
-    try {
-      setState({ items: await loadItems(query), loading: false });
-    } catch {
-      setState((value) => ({ ...value, loading: false }));
+  const load = useCallback(
+    async (query?: string) => {
+      setState((value) => ({ ...value, loading: true }));
+      try {
+        setState({ items: await loadItems(query), loading: false });
+      } catch {
+        setState((value) => ({ ...value, loading: false }));
+      }
+    },
+    [loadItems],
+  );
+  useEffect(() => {
+    if (!loaded.current) {
+      loaded.current = true;
+      void load();
     }
-  }, [loadItems]);
-  useEffect(() => { if (!loaded.current) { loaded.current = true; void load(); } }, [load]);
+  }, [load]);
   return { ...state, load };
 }
 

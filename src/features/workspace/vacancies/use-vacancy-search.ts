@@ -34,9 +34,23 @@ export function useVacancySearch() {
 
   const search = useCallback(async (params: VacancySearchParams = {}) => {
     paramsRef.current = params;
-    setState((s) => ({ ...s, loading: true, loadingMore: false, error: null, vacancies: [], page: 0, hasMore: false, selectedId: null, vacancy: null }));
+    setState((s) => ({
+      ...s,
+      loading: true,
+      loadingMore: false,
+      error: null,
+      vacancies: [],
+      page: 0,
+      hasMore: false,
+      selectedId: null,
+      vacancy: null,
+    }));
     try {
-      const data = await vacancyService.search({ ...params, page: 0, per_page: PER_PAGE });
+      const data = await vacancyService.search({
+        ...params,
+        page: 0,
+        per_page: PER_PAGE,
+      });
       setState((s) => ({
         ...s,
         vacancies: data.items,
@@ -45,7 +59,11 @@ export function useVacancySearch() {
         hasMore: data.items.length >= PER_PAGE && data.page < data.pages - 1,
       }));
     } catch (error) {
-      setState((s) => ({ ...s, loading: false, error: error instanceof Error ? error.message : "Ошибка поиска вакансий" }));
+      setState((s) => ({
+        ...s,
+        loading: false,
+        error: error instanceof Error ? error.message : "Ошибка поиска вакансий",
+      }));
     }
   }, []);
 
@@ -58,7 +76,11 @@ export function useVacancySearch() {
     if (!snapshot.hasMore || snapshot.loading || snapshot.loadingMore) return;
     const nextPage = snapshot.page + 1;
     try {
-      const data = await vacancyService.search({ ...paramsRef.current, page: nextPage, per_page: PER_PAGE });
+      const data = await vacancyService.search({
+        ...paramsRef.current,
+        page: nextPage,
+        per_page: PER_PAGE,
+      });
       setState((s) => ({
         ...s,
         vacancies: [...s.vacancies, ...data.items],
@@ -67,20 +89,36 @@ export function useVacancySearch() {
         hasMore: data.items.length >= PER_PAGE && data.page < data.pages - 1,
       }));
     } catch (error) {
-      setState((s) => ({ ...s, loadingMore: false, error: error instanceof Error ? error.message : "Ошибка подгрузки вакансий" }));
+      setState((s) => ({
+        ...s,
+        loadingMore: false,
+        error: error instanceof Error ? error.message : "Ошибка подгрузки вакансий",
+      }));
     }
   }, [state]);
 
-  const select = useCallback(async (id: string) => {
-    if (state.selectedId === id) return;
-    setState((s) => ({ ...s, selectedId: id, vacancy: null, loadingDetail: true }));
-    try {
-      const detail = await vacancyService.get(id);
-      setState((s) => ({ ...s, vacancy: detail, loadingDetail: false }));
-    } catch (error) {
-      setState((s) => ({ ...s, loadingDetail: false, error: error instanceof Error ? error.message : "Ошибка загрузки деталей вакансии" }));
-    }
-  }, [state.selectedId]);
+  const select = useCallback(
+    async (id: string) => {
+      if (state.selectedId === id) return;
+      setState((s) => ({
+        ...s,
+        selectedId: id,
+        vacancy: null,
+        loadingDetail: true,
+      }));
+      try {
+        const detail = await vacancyService.get(id);
+        setState((s) => ({ ...s, vacancy: detail, loadingDetail: false }));
+      } catch (error) {
+        setState((s) => ({
+          ...s,
+          loadingDetail: false,
+          error: error instanceof Error ? error.message : "Ошибка загрузки деталей вакансии",
+        }));
+      }
+    },
+    [state.selectedId],
+  );
 
   useEffect(() => {
     void search();

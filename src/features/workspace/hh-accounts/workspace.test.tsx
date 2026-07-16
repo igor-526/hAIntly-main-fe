@@ -3,24 +3,132 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { HhWorkspace } from "./workspace";
 
-const hook=vi.fn(); const logout=vi.fn();
-vi.mock("./use-hh-accounts",()=>({useHhAccounts:()=>hook()}));
-vi.mock("@/contexts/auth-context",()=>({useAuth:()=>({status:"authenticated",logout,logoutPending:false})}));
-vi.mock("next/navigation",()=>({useRouter:()=>({replace:vi.fn()})}));
-const anna={id:"1",hh_user_id:"7",display_name:"Анна",email:null,avatar_url:null,created_at:"",updated_at:null};
-const boris={...anna,id:"2",hh_user_id:"8",display_name:"Борис"};
-const base={loading:false,pending:false,error:undefined,accounts:[],activeId:null,load:vi.fn(),connect:vi.fn(),select:vi.fn(),remove:vi.fn()};
-const multiple={...base,accounts:[anna,boris],activeId:"1"};
+const hook = vi.fn();
+const logout = vi.fn();
+vi.mock("./use-hh-accounts", () => ({ useHhAccounts: () => hook() }));
+vi.mock("@/contexts/auth-context", () => ({
+  useAuth: () => ({ status: "authenticated", logout, logoutPending: false }),
+}));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
+const anna = {
+  id: "1",
+  hh_user_id: "7",
+  display_name: "Анна",
+  email: null,
+  avatar_url: null,
+  created_at: "",
+  updated_at: null,
+};
+const boris = { ...anna, id: "2", hh_user_id: "8", display_name: "Борис" };
+const base = {
+  loading: false,
+  pending: false,
+  error: undefined,
+  accounts: [],
+  activeId: null,
+  load: vi.fn(),
+  connect: vi.fn(),
+  select: vi.fn(),
+  remove: vi.fn(),
+};
+const multiple = { ...base, accounts: [anna, boris], activeId: "1" };
 
-describe("HhWorkspace MUI",()=>{
- beforeEach(()=>{for(const value of [...Object.values(base),logout])if(typeof value==="function")value.mockReset();base.connect.mockResolvedValue(void 0);base.select.mockResolvedValue(void 0);base.remove.mockResolvedValue(true);hook.mockReturnValue(base)});
- it("показывает empty и запускает OAuth",async()=>{render(<HhWorkspace/>);expect(screen.getByText("Подключите аккаунт HeadHunter")).toBeInTheDocument();await userEvent.click(screen.getByRole("button",{name:"Подключить HH"}));expect(base.connect).toHaveBeenCalledOnce()});
- it("открывает верхний Drawer и выбирает другой аккаунт",async()=>{hook.mockReturnValue(multiple);render(<HhWorkspace/>);const trigger=screen.getByRole("button",{name:"Активный аккаунт HH: Анна"});await userEvent.click(trigger);expect(screen.getByRole("dialog",{name:"Управление аккаунтами HH"})).toBeVisible();await userEvent.click(screen.getByText("Борис"));expect(base.select).toHaveBeenCalledWith("2")});
- it("добавляет аккаунт и закрывает Drawer",async()=>{hook.mockReturnValue(multiple);render(<HhWorkspace/>);await userEvent.click(screen.getByRole("button",{name:/Активный аккаунт/}));await userEvent.click(screen.getByRole("button",{name:"Добавить аккаунт"}));expect(base.connect).toHaveBeenCalledOnce();await waitFor(()=>expect(screen.queryByRole("dialog",{name:"Управление аккаунтами HH"})).not.toBeInTheDocument())});
- it("удаляет неактивный аккаунт по id строки после подтверждения",async()=>{hook.mockReturnValue(multiple);render(<HhWorkspace/>);await userEvent.click(screen.getByRole("button",{name:/Активный аккаунт/}));const deletes=screen.getAllByRole("button",{name:"Удалить"});await userEvent.click(deletes[1]);const dialog=screen.getByRole("dialog",{name:"Удалить аккаунт HH?"});expect(dialog).toHaveTextContent("«Борис»");expect(base.remove).not.toHaveBeenCalled();await userEvent.click(screen.getByRole("button",{name:"Удалить"}));expect(base.remove).toHaveBeenCalledWith("2")});
- it("сохраняет dialog и правильную цель после ошибки для retry",async()=>{base.remove.mockResolvedValueOnce(false).mockResolvedValueOnce(true);hook.mockReturnValue({...multiple,error:"Сеть"});render(<HhWorkspace/>);await userEvent.click(screen.getByRole("button",{name:/Активный аккаунт/}));await userEvent.click(screen.getAllByRole("button",{name:"Удалить"})[0]);await userEvent.click(screen.getByRole("button",{name:"Удалить"}));expect(screen.getByRole("dialog",{name:"Удалить аккаунт HH?"})).toHaveTextContent("Анна");await userEvent.click(screen.getByRole("button",{name:"Удалить"}));expect(base.remove).toHaveBeenNthCalledWith(2,"1")});
- it("блокирует двойное подтверждение",async()=>{let done!:(v:boolean)=>void;base.remove.mockReturnValue(new Promise(r=>{done=r}));hook.mockReturnValue(multiple);render(<HhWorkspace/>);await userEvent.click(screen.getByRole("button",{name:/Активный аккаунт/}));await userEvent.click(screen.getAllByRole("button",{name:"Удалить"})[0]);const submit=screen.getByRole("button",{name:"Удалить"});fireEvent.click(submit);fireEvent.click(submit);expect(base.remove).toHaveBeenCalledOnce();expect(screen.getByRole("button",{name:"Удаляем…"})).toBeDisabled();await act(async()=>done(true))});
- it("показывает disabled настройки и выполняет logout",async()=>{hook.mockReturnValue(multiple);render(<HhWorkspace/>);await userEvent.click(screen.getByRole("button",{name:"Меню профиля"}));expect(screen.getByRole("menuitem",{name:"Настройки"})).toHaveAttribute("aria-disabled","true");await userEvent.click(screen.getByRole("menuitem",{name:"Выход"}));expect(logout).toHaveBeenCalledOnce()});
- it("показывает loading и retryable error",async()=>{hook.mockReturnValue({...base,loading:true});const view=render(<HhWorkspace/>);expect(screen.getByRole("status")).toHaveTextContent("Загружаем HH");hook.mockReturnValue({...base,error:"Сеть"});view.rerender(<HhWorkspace/>);await userEvent.click(screen.getByRole("button",{name:"Повторить"}));expect(base.load).toHaveBeenCalledOnce()});
- it("меняет ширину панелей с клавиатуры",()=>{hook.mockReturnValue({...base,accounts:[anna],activeId:"1"});render(<HhWorkspace/>);const separator=screen.getByRole("separator");fireEvent.keyDown(separator,{key:"ArrowRight"});expect(separator.parentElement).toHaveStyle("grid-template-columns: minmax(20rem,50%) .6rem minmax(20rem,1fr)")});
+describe("HhWorkspace MUI", () => {
+  beforeEach(() => {
+    for (const value of [...Object.values(base), logout]) if (typeof value === "function") value.mockReset();
+    base.connect.mockResolvedValue(void 0);
+    base.select.mockResolvedValue(void 0);
+    base.remove.mockResolvedValue(true);
+    hook.mockReturnValue(base);
+  });
+  it("показывает empty и запускает OAuth", async () => {
+    render(<HhWorkspace />);
+    expect(screen.getByText("Подключите аккаунт HeadHunter")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Подключить HH" }));
+    expect(base.connect).toHaveBeenCalledOnce();
+  });
+  it("открывает верхний Drawer и выбирает другой аккаунт", async () => {
+    hook.mockReturnValue(multiple);
+    render(<HhWorkspace />);
+    const trigger = screen.getByRole("button", {
+      name: "Активный аккаунт HH: Анна",
+    });
+    await userEvent.click(trigger);
+    expect(screen.getByRole("dialog", { name: "Управление аккаунтами HH" })).toBeVisible();
+    await userEvent.click(screen.getByText("Борис"));
+    expect(base.select).toHaveBeenCalledWith("2");
+  });
+  it("добавляет аккаунт и закрывает Drawer", async () => {
+    hook.mockReturnValue(multiple);
+    render(<HhWorkspace />);
+    await userEvent.click(screen.getByRole("button", { name: /Активный аккаунт/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Добавить аккаунт" }));
+    expect(base.connect).toHaveBeenCalledOnce();
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Управление аккаунтами HH" })).not.toBeInTheDocument());
+  });
+  it("удаляет неактивный аккаунт по id строки после подтверждения", async () => {
+    hook.mockReturnValue(multiple);
+    render(<HhWorkspace />);
+    await userEvent.click(screen.getByRole("button", { name: /Активный аккаунт/ }));
+    const deletes = screen.getAllByRole("button", { name: "Удалить" });
+    await userEvent.click(deletes[1]);
+    const dialog = screen.getByRole("dialog", { name: "Удалить аккаунт HH?" });
+    expect(dialog).toHaveTextContent("«Борис»");
+    expect(base.remove).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Удалить" }));
+    expect(base.remove).toHaveBeenCalledWith("2");
+  });
+  it("сохраняет dialog и правильную цель после ошибки для retry", async () => {
+    base.remove.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    hook.mockReturnValue({ ...multiple, error: "Сеть" });
+    render(<HhWorkspace />);
+    await userEvent.click(screen.getByRole("button", { name: /Активный аккаунт/ }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Удалить" })[0]);
+    await userEvent.click(screen.getByRole("button", { name: "Удалить" }));
+    expect(screen.getByRole("dialog", { name: "Удалить аккаунт HH?" })).toHaveTextContent("Анна");
+    await userEvent.click(screen.getByRole("button", { name: "Удалить" }));
+    expect(base.remove).toHaveBeenNthCalledWith(2, "1");
+  });
+  it("блокирует двойное подтверждение", async () => {
+    let done!: (v: boolean) => void;
+    base.remove.mockReturnValue(
+      new Promise((r) => {
+        done = r;
+      }),
+    );
+    hook.mockReturnValue(multiple);
+    render(<HhWorkspace />);
+    await userEvent.click(screen.getByRole("button", { name: /Активный аккаунт/ }));
+    await userEvent.click(screen.getAllByRole("button", { name: "Удалить" })[0]);
+    const submit = screen.getByRole("button", { name: "Удалить" });
+    fireEvent.click(submit);
+    fireEvent.click(submit);
+    expect(base.remove).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: "Удаляем…" })).toBeDisabled();
+    await act(async () => done(true));
+  });
+  it("показывает disabled настройки и выполняет logout", async () => {
+    hook.mockReturnValue(multiple);
+    render(<HhWorkspace />);
+    await userEvent.click(screen.getByRole("button", { name: "Меню профиля" }));
+    expect(screen.getByRole("menuitem", { name: "Настройки" })).toHaveAttribute("aria-disabled", "true");
+    await userEvent.click(screen.getByRole("menuitem", { name: "Выход" }));
+    expect(logout).toHaveBeenCalledOnce();
+  });
+  it("показывает loading и retryable error", async () => {
+    hook.mockReturnValue({ ...base, loading: true });
+    const view = render(<HhWorkspace />);
+    expect(screen.getByRole("status")).toHaveTextContent("Загружаем HH");
+    hook.mockReturnValue({ ...base, error: "Сеть" });
+    view.rerender(<HhWorkspace />);
+    await userEvent.click(screen.getByRole("button", { name: "Повторить" }));
+    expect(base.load).toHaveBeenCalledOnce();
+  });
+  it("меняет ширину панелей с клавиатуры", () => {
+    hook.mockReturnValue({ ...base, accounts: [anna], activeId: "1" });
+    render(<HhWorkspace />);
+    const separator = screen.getByRole("separator");
+    fireEvent.keyDown(separator, { key: "ArrowRight" });
+    expect(separator.parentElement).toHaveStyle("grid-template-columns: minmax(20rem,50%) .6rem minmax(20rem,1fr)");
+  });
 });

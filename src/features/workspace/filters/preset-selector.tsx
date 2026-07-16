@@ -46,40 +46,50 @@ export function PresetSelector({ presets, selectedId, loading, onSelect, onEdit,
         onClick={(e) => setAnchorEl(e.currentTarget)}
         aria-expanded={!!anchorEl}
         aria-haspopup="listbox"
-        sx={{ textTransform: "none", justifyContent: "space-between", minWidth: 200 }}
+        sx={{
+          textTransform: "none",
+          justifyContent: "space-between",
+          minWidth: 200,
+        }}
       >
         {selectedName}
       </Button>
-      <Menu
-        anchorEl={anchorEl}
-        open={!!anchorEl}
-        onClose={handleClose}
-        slotProps={{ paper: { sx: { width: 320, maxHeight: 400 } } }}
-      >
+      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={handleClose} slotProps={{ paper: { sx: { width: 320, maxHeight: 400 } } }}>
         <Box sx={{ px: 1, pb: 1 }}>
-          <TextField
-            size="small"
-            placeholder="Поиск пресетов…"
-            value={search}
-            onChange={(e) => handleSearch(e.target.value)}
-            fullWidth
-            autoFocus
-          />
+          <TextField size="small" placeholder="Поиск пресетов…" value={search} onChange={(e) => handleSearch(e.target.value)} fullWidth autoFocus />
         </Box>
         <MenuItem
-          onClick={() => { onSelect(null); handleClose(); }}
+          onClick={() => {
+            onSelect(null);
+            handleClose();
+          }}
           selected={!selectedId}
         >
           <ListItemText primary="Без пресета" />
         </MenuItem>
         <Divider />
-        {loading && <MenuItem disabled><Typography variant="body2" color="text.secondary">Загрузка…</Typography></MenuItem>}
-        {!loading && presets.length === 0 && <MenuItem disabled><Typography variant="body2" color="text.secondary">Пресетов нет</Typography></MenuItem>}
+        {loading && (
+          <MenuItem disabled>
+            <Typography variant="body2" color="text.secondary">
+              Загрузка…
+            </Typography>
+          </MenuItem>
+        )}
+        {!loading && presets.length === 0 && (
+          <MenuItem disabled>
+            <Typography variant="body2" color="text.secondary">
+              Пресетов нет
+            </Typography>
+          </MenuItem>
+        )}
         {presets.map((preset) => (
           <ListItemButton
             key={preset.id}
             selected={preset.id === selectedId}
-            onClick={() => { onSelect(preset.id); handleClose(); }}
+            onClick={() => {
+              onSelect(preset.id);
+              handleClose();
+            }}
             sx={{ pr: 1 }}
           >
             <ListItemText primary={preset.name} sx={{ mr: 1 }} />
@@ -88,7 +98,11 @@ export function PresetSelector({ presets, selectedId, loading, onSelect, onEdit,
                 <IconButton
                   size="small"
                   aria-label={`Переименовать пресет ${preset.name}`}
-                  onClick={(e) => { e.stopPropagation(); onEdit(preset); handleClose(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(preset);
+                    handleClose();
+                  }}
                 >
                   <EditIcon fontSize="small" />
                 </IconButton>
@@ -98,7 +112,11 @@ export function PresetSelector({ presets, selectedId, loading, onSelect, onEdit,
                   size="small"
                   color="error"
                   aria-label={`Удалить пресет ${preset.name}`}
-                  onClick={(e) => { e.stopPropagation(); onDelete(preset); handleClose(); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(preset);
+                    handleClose();
+                  }}
                 >
                   <DeleteOutlineIcon fontSize="small" />
                 </IconButton>

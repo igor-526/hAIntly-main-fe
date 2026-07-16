@@ -23,7 +23,15 @@ export const vacancyService = {
         }
       }
       const qs = searchParams.toString();
-      return (await apiRequest<VacancySearchResponse>(`${root}${qs ? `?${qs}` : ""}`)) ?? { items: [], found: 0, page: 0, pages: 0, per_page: 30 };
+      return (
+        (await apiRequest<VacancySearchResponse>(`${root}${qs ? `?${qs}` : ""}`)) ?? {
+          items: [],
+          found: 0,
+          page: 0,
+          pages: 0,
+          per_page: 30,
+        }
+      );
     } catch (error) {
       return normalized(error);
     }

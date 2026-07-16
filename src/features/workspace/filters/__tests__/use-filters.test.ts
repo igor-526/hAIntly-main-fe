@@ -18,6 +18,35 @@ vi.mock("../service", () => ({
 import { filterService } from "../service";
 const mockedService = vi.mocked(filterService);
 
+const makePreset = (overrides: Partial<FilterPreset> = {}): FilterPreset => ({
+  id: "1",
+  name: "Test",
+  text: null,
+  excluded_text: null,
+  salary: null,
+  currency: null,
+  salary_mode: null,
+  period: null,
+  date_from: null,
+  date_to: null,
+  order_by: null,
+  premium: null,
+  accept_temporary: null,
+  no_magic: null,
+  top_lat: null,
+  bottom_lat: null,
+  left_lng: null,
+  right_lng: null,
+  sort_point_lat: null,
+  sort_point_lng: null,
+  responses_count_enabled: null,
+  hh_user_id: "123",
+  created_at: "",
+  updated_at: null,
+  values: [],
+  ...overrides,
+});
+
 describe("useFilters", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,7 +63,11 @@ describe("useFilters", () => {
 
   describe("loadPresets", () => {
     it("loads presets from service", async () => {
-      mockedService.list.mockResolvedValue({ items: [{ id: "1", name: "Preset 1" }], limit: 50, offset: 0 });
+      mockedService.list.mockResolvedValue({
+        items: [{ id: "1", name: "Preset 1" }],
+        limit: 50,
+        offset: 0,
+      });
       const { result } = renderHook(() => useFilters());
       await act(() => result.current.loadPresets());
       expect(result.current.presets).toEqual([{ id: "1", name: "Preset 1" }]);
@@ -58,15 +91,13 @@ describe("useFilters", () => {
     });
 
     it("loads preset and fills form", async () => {
-      const preset = {
-        id: "1", name: "Test", text: "hello", excluded_text: null, salary: 100000,
-        currency: "RUR", salary_mode: null, period: 7, date_from: null, date_to: null,
-        order_by: null, premium: null, accept_temporary: null, no_magic: null,
-        top_lat: null, bottom_lat: null, left_lng: null, right_lng: null,
-        sort_point_lat: null, sort_point_lng: null, responses_count_enabled: null,
-        hh_user_id: "123", created_at: "", updated_at: null,
+      const preset = makePreset({
+        text: "hello",
+        salary: 100000,
+        currency: "RUR",
+        period: 7,
         values: [{ parameter_name: "area", value: "1" }],
-      };
+      });
       mockedService.get.mockResolvedValue(preset);
       const { result } = renderHook(() => useFilters());
       await act(() => result.current.selectPreset("1"));
@@ -99,7 +130,10 @@ describe("useFilters", () => {
 
   describe("savePreset", () => {
     it("creates new preset when none selected", async () => {
-      mockedService.create.mockResolvedValue({ id: "new", name: "New" } as FilterPreset);
+      mockedService.create.mockResolvedValue({
+        id: "new",
+        name: "New",
+      } as FilterPreset);
       mockedService.list.mockResolvedValue({ items: [], limit: 50, offset: 0 });
       const { result } = renderHook(() => useFilters());
       act(() => result.current.updateForm({ name: "New" }));
@@ -110,16 +144,12 @@ describe("useFilters", () => {
     });
 
     it("updates existing preset when selected", async () => {
-      mockedService.update.mockResolvedValue({ id: "1", name: "Updated" } as FilterPreset);
+      mockedService.update.mockResolvedValue({
+        id: "1",
+        name: "Updated",
+      } as FilterPreset);
       mockedService.list.mockResolvedValue({ items: [], limit: 50, offset: 0 });
-      mockedService.get.mockResolvedValue({
-        id: "1", name: "Old", text: null, excluded_text: null, salary: null,
-        currency: null, salary_mode: null, period: null, date_from: null, date_to: null,
-        order_by: null, premium: null, accept_temporary: null, no_magic: null,
-        top_lat: null, bottom_lat: null, left_lng: null, right_lng: null,
-        sort_point_lat: null, sort_point_lng: null, responses_count_enabled: null,
-        hh_user_id: "123", created_at: "", updated_at: null, values: [],
-      });
+      mockedService.get.mockResolvedValue(makePreset({ name: "Old" }));
       const { result } = renderHook(() => useFilters());
       await act(() => result.current.selectPreset("1"));
       const ok = await act(() => result.current.savePreset());
@@ -130,7 +160,10 @@ describe("useFilters", () => {
 
   describe("renamePreset", () => {
     it("renames preset via service", async () => {
-      mockedService.update.mockResolvedValue({ id: "1", name: "New" } as FilterPreset);
+      mockedService.update.mockResolvedValue({
+        id: "1",
+        name: "New",
+      } as FilterPreset);
       mockedService.list.mockResolvedValue({ items: [], limit: 50, offset: 0 });
       const { result } = renderHook(() => useFilters());
       const ok = await act(() => result.current.renamePreset("1", "New"));
@@ -152,14 +185,7 @@ describe("useFilters", () => {
     it("resets selection if deleted preset was selected", async () => {
       mockedService.remove.mockResolvedValue(void 0);
       mockedService.list.mockResolvedValue({ items: [], limit: 50, offset: 0 });
-      mockedService.get.mockResolvedValue({
-        id: "1", name: "Test", text: null, excluded_text: null, salary: null,
-        currency: null, salary_mode: null, period: null, date_from: null, date_to: null,
-        order_by: null, premium: null, accept_temporary: null, no_magic: null,
-        top_lat: null, bottom_lat: null, left_lng: null, right_lng: null,
-        sort_point_lat: null, sort_point_lng: null, responses_count_enabled: null,
-        hh_user_id: "123", created_at: "", updated_at: null, values: [],
-      });
+      mockedService.get.mockResolvedValue(makePreset());
       const { result } = renderHook(() => useFilters());
       await act(() => result.current.selectPreset("1"));
       await act(() => result.current.deletePreset("1"));

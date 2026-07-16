@@ -34,7 +34,10 @@ export const filterService = {
 
   async create(data: Record<string, unknown>): Promise<FilterPreset> {
     try {
-      return (await apiRequest<FilterPreset>(root, { method: "POST", body: JSON.stringify(data) }))!;
+      return (await apiRequest<FilterPreset>(root, {
+        method: "POST",
+        body: JSON.stringify(data),
+      }))!;
     } catch (error) {
       return normalized(error);
     }
@@ -42,7 +45,10 @@ export const filterService = {
 
   async update(id: string, data: Record<string, unknown>): Promise<FilterPreset> {
     try {
-      return (await apiRequest<FilterPreset>(`${root}/${encodeURIComponent(id)}`, { method: "PATCH", body: JSON.stringify(data) }))!;
+      return (await apiRequest<FilterPreset>(`${root}/${encodeURIComponent(id)}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }))!;
     } catch (error) {
       return normalized(error);
     }
@@ -50,7 +56,9 @@ export const filterService = {
 
   async remove(id: string): Promise<void> {
     try {
-      await apiRequest(`${root}/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await apiRequest(`${root}/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
     } catch (error) {
       return normalized(error);
     }

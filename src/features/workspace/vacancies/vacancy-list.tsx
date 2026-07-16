@@ -38,24 +38,56 @@ export function VacancyList({ vacancies, selectedId, loading, loadingMore, hasMo
 
   if (loading) {
     return (
-      <Stack sx={{ alignItems: "center", justifyContent: "center", flex: 1, minHeight: 200 }}>
+      <Stack
+        sx={{
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          minHeight: 200,
+        }}
+      >
         <CircularProgress size={32} />
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Загружаем вакансии…</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Загружаем вакансии…
+        </Typography>
       </Stack>
     );
   }
 
   if (error && vacancies.length === 0) {
     return (
-      <Stack sx={{ alignItems: "center", justifyContent: "center", flex: 1, minHeight: 200 }}>
-        <Alert severity="error" action={<Button color="inherit" size="small" onClick={onRetry}>Повторить</Button>}>{error}</Alert>
+      <Stack
+        sx={{
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          minHeight: 200,
+        }}
+      >
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={onRetry}>
+              Повторить
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
       </Stack>
     );
   }
 
   if (vacancies.length === 0) {
     return (
-      <Stack sx={{ alignItems: "center", justifyContent: "center", flex: 1, minHeight: 200 }}>
+      <Stack
+        sx={{
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          minHeight: 200,
+        }}
+      >
         <Typography color="text.secondary">Вакансии не найдены</Typography>
       </Stack>
     );
@@ -72,7 +104,17 @@ export function VacancyList({ vacancies, selectedId, loading, loadingMore, hasMo
         </Box>
       )}
       {error && vacancies.length > 0 && (
-        <Alert severity="error" sx={{ mt: 1 }} action={<Button color="inherit" size="small" onClick={onRetry}>Повторить</Button>}>{error}</Alert>
+        <Alert
+          severity="error"
+          sx={{ mt: 1 }}
+          action={
+            <Button color="inherit" size="small" onClick={onRetry}>
+              Повторить
+            </Button>
+          }
+        >
+          {error}
+        </Alert>
       )}
     </Box>
   );

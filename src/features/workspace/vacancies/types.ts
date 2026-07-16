@@ -10,7 +10,11 @@ export type VacancyEmployer = {
   name: string;
   url: string | null;
   alternate_url: string | null;
-  logo_urls: { original: string | null; "240": string | null; "90": string | null } | null;
+  logo_urls: {
+    original: string | null;
+    "240": string | null;
+    "90": string | null;
+  } | null;
 };
 
 export type VacancyArea = {

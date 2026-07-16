@@ -5,7 +5,10 @@ import { filterService } from "../service";
 
 vi.mock("@/api/main-be", () => ({
   ApiError: class ApiError extends Error {
-    constructor(message: string, public readonly status?: number) {
+    constructor(
+      message: string,
+      public readonly status?: number,
+    ) {
       super(message);
       this.name = "ApiError";
     }
@@ -23,7 +26,11 @@ describe("filterService", () => {
 
   describe("list", () => {
     it("calls GET /api/filters with default params", async () => {
-      mockedApiRequest.mockResolvedValue({ items: [{ id: "1", name: "Test" }], limit: 50, offset: 0 });
+      mockedApiRequest.mockResolvedValue({
+        items: [{ id: "1", name: "Test" }],
+        limit: 50,
+        offset: 0,
+      });
       const result = await filterService.list();
       expect(mockedApiRequest).toHaveBeenCalledWith("/api/filters?limit=50&offset=0");
       expect(result.items).toHaveLength(1);
@@ -79,7 +86,9 @@ describe("filterService", () => {
     it("calls DELETE /api/filters/:id", async () => {
       mockedApiRequest.mockResolvedValue(void 0);
       await filterService.remove("1");
-      expect(mockedApiRequest).toHaveBeenCalledWith("/api/filters/1", { method: "DELETE" });
+      expect(mockedApiRequest).toHaveBeenCalledWith("/api/filters/1", {
+        method: "DELETE",
+      });
     });
   });
 });

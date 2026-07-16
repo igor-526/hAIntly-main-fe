@@ -24,11 +24,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="ru"
-      className={`${geistSans.variable} ${geistMono.variable}`}
-    >
-      <body><AppProviders>{children}</AppProviders></body>
+    <html lang="ru" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

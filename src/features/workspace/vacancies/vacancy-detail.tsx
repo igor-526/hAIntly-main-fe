@@ -16,7 +16,11 @@ function formatSalary(salary: VacancySalary | null): string | null {
 
 function formatDate(iso: string): string {
   try {
-    return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+    return new Date(iso).toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   } catch {
     return iso;
   }
@@ -31,16 +35,32 @@ type VacancyDetailPanelProps = {
 export function VacancyDetailPanel({ vacancy, loading, selectedId }: VacancyDetailPanelProps) {
   if (loading) {
     return (
-      <Stack sx={{ alignItems: "center", justifyContent: "center", flex: 1, minHeight: 200 }}>
+      <Stack
+        sx={{
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          minHeight: 200,
+        }}
+      >
         <CircularProgress size={32} />
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Загружаем детали…</Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          Загружаем детали…
+        </Typography>
       </Stack>
     );
   }
 
   if (!selectedId) {
     return (
-      <Stack sx={{ alignItems: "center", justifyContent: "center", flex: 1, minHeight: 200 }}>
+      <Stack
+        sx={{
+          alignItems: "center",
+          justifyContent: "center",
+          flex: 1,
+          minHeight: 200,
+        }}
+      >
         <Typography color="text.secondary">Выберите вакансию из списка для просмотра деталей</Typography>
       </Stack>
     );
@@ -52,9 +72,13 @@ export function VacancyDetailPanel({ vacancy, loading, selectedId }: VacancyDeta
 
   return (
     <Box sx={{ flex: 1, overflow: "auto", p: 1 }}>
-      <Typography variant="h5" sx={{ fontWeight: 700 }}>{vacancy.name}</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 700 }}>
+        {vacancy.name}
+      </Typography>
       {vacancy.employer && (
-        <Typography variant="subtitle1" color="text.secondary">{vacancy.employer.name}</Typography>
+        <Typography variant="subtitle1" color="text.secondary">
+          {vacancy.employer.name}
+        </Typography>
       )}
 
       <Stack direction="row" spacing={0.5} sx={{ mt: 1, flexWrap: "wrap", gap: 0.5 }}>
@@ -80,7 +104,12 @@ export function VacancyDetailPanel({ vacancy, loading, selectedId }: VacancyDeta
 
       {vacancy.description && (
         <Box
-          sx={{ "& p": { mb: 1 }, "& ul, & ol": { pl: 3, mb: 1 }, "& li": { mb: 0.5 }, "& strong": { fontWeight: 600 } }}
+          sx={{
+            "& p": { mb: 1 },
+            "& ul, & ol": { pl: 3, mb: 1 },
+            "& li": { mb: 0.5 },
+            "& strong": { fontWeight: 600 },
+          }}
           dangerouslySetInnerHTML={{ __html: vacancy.description }}
         />
       )}
@@ -89,9 +118,13 @@ export function VacancyDetailPanel({ vacancy, loading, selectedId }: VacancyDeta
 
       <Stack spacing={0.5}>
         {vacancy.address?.raw && (
-          <Typography variant="body2" color="text.secondary">Адрес: {vacancy.address.raw}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Адрес: {vacancy.address.raw}
+          </Typography>
         )}
-        <Typography variant="body2" color="text.secondary">Опубликовано: {formatDate(vacancy.published_at)}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          Опубликовано: {formatDate(vacancy.published_at)}
+        </Typography>
         <Link href={vacancy.alternate_url} target="_blank" rel="noopener noreferrer" variant="body2">
           Открыть на HeadHunter
         </Link>

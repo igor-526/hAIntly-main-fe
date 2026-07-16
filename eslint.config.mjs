@@ -5,7 +5,10 @@ import sonarjs from "eslint-plugin-sonarjs";
 import unicorn from "eslint-plugin-unicorn";
 
 const inlineHandlerRestrictions = [
-  { selector: "JSXAttribute[name.name=/^on[A-Z]/] JSXExpressionContainer > ArrowFunctionExpression[body.type='BlockStatement'][body.length>2]", message: "Сложный JSX handler должен быть именованной функцией." },
+  {
+    selector: "JSXAttribute[name.name=/^on[A-Z]/] JSXExpressionContainer > ArrowFunctionExpression[body.type='BlockStatement'][body.length>2]",
+    message: "Сложный JSX handler должен быть именованной функцией.",
+  },
 ];
 
 const eslintConfig = defineConfig([
@@ -23,11 +26,19 @@ const eslintConfig = defineConfig([
       "unicorn/no-useless-undefined": "error",
       "sonarjs/no-identical-functions": "error",
       "sonarjs/cognitive-complexity": ["error", 30],
-      "complexity": ["error", 20],
+      complexity: ["error", 20],
       "max-lines": ["error", { max: 400, skipBlankLines: true, skipComments: true }],
       "max-lines-per-function": ["error", { max: 200, skipBlankLines: true, skipComments: true, IIFEs: true }],
       "max-statements": ["error", 60],
-      "react/jsx-no-bind": ["error", { allowArrowFunctions: true, allowFunctions: false, allowBind: false, ignoreRefs: true }],
+      "react/jsx-no-bind": [
+        "error",
+        {
+          allowArrowFunctions: true,
+          allowFunctions: false,
+          allowBind: false,
+          ignoreRefs: true,
+        },
+      ],
       "no-restricted-syntax": ["error", ...inlineHandlerRestrictions],
     },
   },

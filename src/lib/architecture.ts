@@ -17,9 +17,7 @@ function importTarget(owner: string, specifier: string) {
 }
 
 function imports(owner: string, content: string) {
-  return [...content.matchAll(importPattern)]
-    .map((match) => importTarget(owner, match[1]))
-    .filter((target): target is string => target !== null);
+  return [...content.matchAll(importPattern)].map((match) => importTarget(owner, match[1])).filter((target): target is string => target !== null);
 }
 
 function dependencyViolations(path: string, content: string) {

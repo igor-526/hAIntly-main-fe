@@ -21,7 +21,9 @@ describe("PresetModal", () => {
   it("calls onSave with name on save click", async () => {
     const onSave = vi.fn().mockResolvedValue(true);
     render(<PresetModal open initialName="" saving={false} onSave={onSave} onClose={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText("Название пресета"), { target: { value: "My Preset" } });
+    fireEvent.change(screen.getByLabelText("Название пресета"), {
+      target: { value: "My Preset" },
+    });
     fireEvent.click(screen.getByText("Сохранить"));
     expect(onSave).toHaveBeenCalledWith("My Preset");
   });

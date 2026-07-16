@@ -63,7 +63,17 @@ export function VacancyCard({ vacancy, selected, onClick }: VacancyCardProps) {
         {vacancy.experience && <Chip label={vacancy.experience.name} size="small" variant="outlined" />}
       </Stack>
       {snippet && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            mt: 0.5,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
           {snippet}
         </Typography>
       )}

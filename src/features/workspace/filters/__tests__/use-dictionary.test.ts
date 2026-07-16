@@ -3,11 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { dictionaryService } from "../dictionary-service";
 import { useDictionary, useDictionaryItems } from "../use-dictionary";
 
-vi.mock("../dictionary-service", () => ({ dictionaryService: { list: vi.fn(), listItems: vi.fn() } }));
+vi.mock("../dictionary-service", () => ({
+  dictionaryService: { list: vi.fn(), listItems: vi.fn() },
+}));
 const service = vi.mocked(dictionaryService);
 
 describe("dictionary hooks", () => {
-  beforeEach(() => { service.list.mockReset(); service.listItems.mockReset(); });
+  beforeEach(() => {
+    service.list.mockReset();
+    service.listItems.mockReset();
+  });
   it("загружает справочник и поддерживает поиск", async () => {
     service.list.mockResolvedValue([{ id: "1", name: "Москва" }]);
     const { result } = renderHook(() => useDictionary("/api/dictionaries/areas"));

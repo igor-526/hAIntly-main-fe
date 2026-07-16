@@ -1,0 +1,5 @@
+**/.github/**
+**/.helm/**
+.next/
+coverage/
+node_modules/

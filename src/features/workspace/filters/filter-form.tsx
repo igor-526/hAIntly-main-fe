@@ -11,10 +11,7 @@ type FilterFormProps = {
   disabled?: boolean;
 };
 
-function MultiDictSelect({ label, value, items, loading, onChange, onSearch }: {
-  label: string; value: string[]; items: DictionaryItem[]; loading: boolean;
-  onChange: (val: string[]) => void; onSearch?: (q: string) => void;
-}) {
+function MultiDictSelect({ label, value, items, loading, onChange, onSearch }: { label: string; value: string[]; items: DictionaryItem[]; loading: boolean; onChange: (val: string[]) => void; onSearch?: (q: string) => void }) {
   const selected = useMemo(() => items.filter((i) => value.includes(i.id)), [items, value]);
   return (
     <Autocomplete
@@ -40,10 +37,7 @@ function MultiDictSelect({ label, value, items, loading, onChange, onSearch }: {
   );
 }
 
-function SingleDictSelect({ label, value, items, loading, onChange, onSearch }: {
-  label: string; value: string; items: DictionaryItem[]; loading: boolean;
-  onChange: (val: string) => void; onSearch?: (q: string) => void;
-}) {
+function SingleDictSelect({ label, value, items, loading, onChange, onSearch }: { label: string; value: string; items: DictionaryItem[]; loading: boolean; onChange: (val: string) => void; onSearch?: (q: string) => void }) {
   const selected = useMemo(() => items.find((i) => i.id === value) ?? null, [items, value]);
   return (
     <Autocomplete
@@ -63,7 +57,11 @@ function SingleDictSelect({ label, value, items, loading, onChange, onSearch }: 
 }
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
-  return <Typography variant="subtitle2" color="primary" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>{children}</Typography>;
+  return (
+    <Typography variant="subtitle2" color="primary" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+      {children}
+    </Typography>
+  );
 }
 
 export function FilterForm({ form, onChange, disabled }: FilterFormProps) {
@@ -89,7 +87,10 @@ export function FilterForm({ form, onChange, disabled }: FilterFormProps) {
   const debouncedSearch = useCallback((key: string, fn: (q: string) => void, q: string) => {
     const existing = debounceTimers.current.get(key);
     if (existing) clearTimeout(existing);
-    debounceTimers.current.set(key, setTimeout(() => fn(q), 300));
+    debounceTimers.current.set(
+      key,
+      setTimeout(() => fn(q), 300),
+    );
   }, []);
 
   return (
@@ -122,7 +123,19 @@ export function FilterForm({ form, onChange, disabled }: FilterFormProps) {
       <Stack spacing={1.5}>
         <MultiDictSelect label="Профессиональная роль" value={form.professional_role} items={professionalRoles.items} loading={professionalRoles.loading} onChange={(val) => onChange({ professional_role: val })} onSearch={(q) => debouncedSearch("proles", professionalRoles.load, q)} />
         <MultiDictSelect label="Отрасль" value={form.industry} items={industries.items} loading={industries.loading} onChange={(val) => onChange({ industry: val })} onSearch={(q) => debouncedSearch("industries", industries.load, q)} />
-        <TextField label="ID работодателя" value={form.employer_id} onChange={(e) => onChange({ employer_id: e.target.value ? e.target.value.split(",").map((s) => s.trim()) : [] })} size="small" fullWidth disabled={disabled} helperText="Через запятую" />
+        <TextField
+          label="ID работодателя"
+          value={form.employer_id}
+          onChange={(e) =>
+            onChange({
+              employer_id: e.target.value ? e.target.value.split(",").map((s) => s.trim()) : [],
+            })
+          }
+          size="small"
+          fullWidth
+          disabled={disabled}
+          helperText="Через запятую"
+        />
       </Stack>
 
       {/* Work conditions */}
@@ -139,7 +152,18 @@ export function FilterForm({ form, onChange, disabled }: FilterFormProps) {
       {/* Salary */}
       <SectionTitle>Зарплата</SectionTitle>
       <Stack spacing={1.5}>
-        <TextField label="Зарплата" value={form.salary} onChange={(e) => onChange({ salary: e.target.value })} size="small" type="number" fullWidth disabled={disabled} InputProps={{ startAdornment: <InputAdornment position="start">₽</InputAdornment> }} />
+        <TextField
+          label="Зарплата"
+          value={form.salary}
+          onChange={(e) => onChange({ salary: e.target.value })}
+          size="small"
+          type="number"
+          fullWidth
+          disabled={disabled}
+          InputProps={{
+            startAdornment: <InputAdornment position="start">₽</InputAdornment>,
+          }}
+        />
         <TextField label="Валюта" value={form.currency} onChange={(e) => onChange({ currency: e.target.value })} size="small" fullWidth disabled={disabled} />
         <MultiDictSelect label="Частота зарплаты" value={form.salary_frequency} items={salaryFrequencies.items} loading={salaryFrequencies.loading} onChange={(val) => onChange({ salary_frequency: val })} onSearch={(q) => debouncedSearch("salary_freq", salaryFrequencies.load, q)} />
         <SingleDictSelect label="Режим зарплаты" value={form.salary_mode} items={salaryModes.items} loading={salaryModes.loading} onChange={(val) => onChange({ salary_mode: val })} onSearch={(q) => debouncedSearch("salary_mode", salaryModes.load, q)} />
@@ -149,7 +173,14 @@ export function FilterForm({ form, onChange, disabled }: FilterFormProps) {
       <SectionTitle>Метки и дополнительные</SectionTitle>
       <Stack spacing={1.5}>
         <MultiDictSelect label="Метки" value={form.label} items={vacancyLabels.items} loading={vacancyLabels.loading} onChange={(val) => onChange({ label: val })} onSearch={(q) => debouncedSearch("labels", vacancyLabels.load, q)} />
-        <MultiDictSelect label="Водительское удостоверение" value={form.driver_license_types} items={driverLicenseTypes.items} loading={driverLicenseTypes.loading} onChange={(val) => onChange({ driver_license_types: val })} onSearch={(q) => debouncedSearch("driver_license", driverLicenseTypes.load, q)} />
+        <MultiDictSelect
+          label="Водительское удостоверение"
+          value={form.driver_license_types}
+          items={driverLicenseTypes.items}
+          loading={driverLicenseTypes.loading}
+          onChange={(val) => onChange({ driver_license_types: val })}
+          onSearch={(q) => debouncedSearch("driver_license", driverLicenseTypes.load, q)}
+        />
         <FormControl size="small" fullWidth>
           <FormLabel sx={{ fontSize: "0.75rem" }}>Период (дней)</FormLabel>
           <Select value={form.period} onChange={(e) => onChange({ period: e.target.value })} displayEmpty disabled={disabled}>

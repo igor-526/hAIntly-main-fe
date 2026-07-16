@@ -31,35 +31,72 @@ const makeItems = (count: number) =>
 describe("useVacancySearch", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedService.search.mockResolvedValue({ items: [], found: 0, page: 0, pages: 0, per_page: 30 });
+    mockedService.search.mockResolvedValue({
+      items: [],
+      found: 0,
+      page: 0,
+      pages: 0,
+      per_page: 30,
+    });
   });
 
   it("auto-searches on mount", async () => {
     renderHook(() => useVacancySearch());
     await waitFor(() => expect(mockedService.search).toHaveBeenCalled());
-    expect(mockedService.search).toHaveBeenCalledWith({ page: 0, per_page: 30 });
+    expect(mockedService.search).toHaveBeenCalledWith({
+      page: 0,
+      per_page: 30,
+    });
   });
 
   it("search resets list and page", async () => {
-    mockedService.search.mockResolvedValue({ items: makeItems(5), found: 5, page: 0, pages: 1, per_page: 30 });
+    mockedService.search.mockResolvedValue({
+      items: makeItems(5),
+      found: 5,
+      page: 0,
+      pages: 1,
+      per_page: 30,
+    });
     const { result } = renderHook(() => useVacancySearch());
     await waitFor(() => expect(result.current.loading).toBe(false));
     await act(() => result.current.search({ text: "python" }));
-    expect(mockedService.search).toHaveBeenLastCalledWith({ text: "python", page: 0, per_page: 30 });
+    expect(mockedService.search).toHaveBeenLastCalledWith({
+      text: "python",
+      page: 0,
+      per_page: 30,
+    });
     expect(result.current.vacancies).toHaveLength(5);
     expect(result.current.hasMore).toBe(false);
   });
 
   it("sets hasMore=true when full page returned", async () => {
-    mockedService.search.mockResolvedValue({ items: makeItems(30), found: 100, page: 0, pages: 4, per_page: 30 });
+    mockedService.search.mockResolvedValue({
+      items: makeItems(30),
+      found: 100,
+      page: 0,
+      pages: 4,
+      per_page: 30,
+    });
     const { result } = renderHook(() => useVacancySearch());
     await waitFor(() => expect(result.current.hasMore).toBe(true));
   });
 
   it("loadMore appends items", async () => {
     mockedService.search
-      .mockResolvedValueOnce({ items: makeItems(30), found: 60, page: 0, pages: 2, per_page: 30 })
-      .mockResolvedValueOnce({ items: makeItems(30), found: 60, page: 1, pages: 2, per_page: 30 });
+      .mockResolvedValueOnce({
+        items: makeItems(30),
+        found: 60,
+        page: 0,
+        pages: 2,
+        per_page: 30,
+      })
+      .mockResolvedValueOnce({
+        items: makeItems(30),
+        found: 60,
+        page: 1,
+        pages: 2,
+        per_page: 30,
+      });
     const { result } = renderHook(() => useVacancySearch());
     await waitFor(() => expect(result.current.vacancies).toHaveLength(30));
     await act(() => result.current.loadMore());
@@ -68,7 +105,13 @@ describe("useVacancySearch", () => {
   });
 
   it("loadMore does nothing when hasMore=false", async () => {
-    mockedService.search.mockResolvedValue({ items: makeItems(5), found: 5, page: 0, pages: 1, per_page: 30 });
+    mockedService.search.mockResolvedValue({
+      items: makeItems(5),
+      found: 5,
+      page: 0,
+      pages: 1,
+      per_page: 30,
+    });
     const { result } = renderHook(() => useVacancySearch());
     await waitFor(() => expect(result.current.hasMore).toBe(false));
     const callCount = mockedService.search.mock.calls.length;
@@ -77,8 +120,31 @@ describe("useVacancySearch", () => {
   });
 
   it("select loads vacancy detail", async () => {
-    mockedService.search.mockResolvedValue({ items: makeItems(1), found: 1, page: 0, pages: 1, per_page: 30 });
-    const detail = { id: "1", name: "Vacancy 1", description: "desc", key_skills: [], experience: null, area: { id: "1", name: "Москва", url: null }, employer: null, salary: null, salary_range: null, snippet: { requirement: null, responsibility: null }, published_at: "2025-01-01T00:00:00+0300", alternate_url: "", address: null, employment_form: null, work_format: null, schedule: null };
+    mockedService.search.mockResolvedValue({
+      items: makeItems(1),
+      found: 1,
+      page: 0,
+      pages: 1,
+      per_page: 30,
+    });
+    const detail = {
+      id: "1",
+      name: "Vacancy 1",
+      description: "desc",
+      key_skills: [],
+      experience: null,
+      area: { id: "1", name: "Москва", url: null },
+      employer: null,
+      salary: null,
+      salary_range: null,
+      snippet: { requirement: null, responsibility: null },
+      published_at: "2025-01-01T00:00:00+0300",
+      alternate_url: "",
+      address: null,
+      employment_form: null,
+      work_format: null,
+      schedule: null,
+    };
     mockedService.get.mockResolvedValue(detail as VacancyDetail);
     const { result } = renderHook(() => useVacancySearch());
     await waitFor(() => expect(result.current.vacancies).toHaveLength(1));
@@ -89,7 +155,13 @@ describe("useVacancySearch", () => {
   });
 
   it("select does nothing for same id", async () => {
-    mockedService.search.mockResolvedValue({ items: makeItems(1), found: 1, page: 0, pages: 1, per_page: 30 });
+    mockedService.search.mockResolvedValue({
+      items: makeItems(1),
+      found: 1,
+      page: 0,
+      pages: 1,
+      per_page: 30,
+    });
     mockedService.get.mockResolvedValue({ id: "1" } as VacancyDetail);
     const { result } = renderHook(() => useVacancySearch());
     await waitFor(() => expect(result.current.vacancies).toHaveLength(1));

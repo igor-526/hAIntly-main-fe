@@ -10,17 +10,30 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const media = window.matchMedia("(prefers-color-scheme: dark)");
     const update = (event: MediaQueryListEvent | MediaQueryList) => setDark(event.matches);
-    update(media); media.addEventListener("change", update);
+    update(media);
+    media.addEventListener("change", update);
     return () => media.removeEventListener("change", update);
   }, []);
-  const theme = useMemo(() => createTheme({
-    palette: { mode: dark ? "dark" : "light", primary: { main: "#5b5bd6" } },
-    shape: { borderRadius: 12 },
-    typography: { fontFamily: "var(--font-geist-sans), Arial, sans-serif" },
-    components: { MuiButton: { defaultProps: { disableElevation: true } } },
-  }), [dark]);
+  const theme = useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: dark ? "dark" : "light",
+          primary: { main: "#5b5bd6" },
+        },
+        shape: { borderRadius: 12 },
+        typography: { fontFamily: "var(--font-geist-sans), Arial, sans-serif" },
+        components: { MuiButton: { defaultProps: { disableElevation: true } } },
+      }),
+    [dark],
+  );
 
-  return <AppRouterCacheProvider options={{ enableCssLayer: true }}>
-    <ThemeProvider theme={theme}><CssBaseline /><AuthProvider>{children}</AuthProvider></ThemeProvider>
-  </AppRouterCacheProvider>;
+  return (
+    <AppRouterCacheProvider options={{ enableCssLayer: true }}>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AuthProvider>{children}</AuthProvider>
+      </ThemeProvider>
+    </AppRouterCacheProvider>
+  );
 }

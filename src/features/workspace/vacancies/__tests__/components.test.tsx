@@ -8,11 +8,20 @@ import type { VacancyDetail, VacancyListItem } from "../types";
 const baseVacancy: VacancyListItem = {
   id: "1",
   name: "Python Developer",
-  employer: { id: "1", name: "Яндекс", url: null, alternate_url: null, logo_urls: null },
+  employer: {
+    id: "1",
+    name: "Яндекс",
+    url: null,
+    alternate_url: null,
+    logo_urls: null,
+  },
   salary: { from: 100000, to: 200000, currency: "RUR", gross: false },
   salary_range: null,
   area: { id: "1", name: "Москва", url: null },
-  snippet: { requirement: "Опыт от 3 лет", responsibility: "Разработка backend" },
+  snippet: {
+    requirement: "Опыт от 3 лет",
+    responsibility: "Разработка backend",
+  },
   published_at: "2025-01-15T10:00:00+0300",
   alternate_url: "https://hh.ru/vacancy/1",
   experience: { id: "between1And3", name: "1–3 года" },
@@ -56,7 +65,9 @@ describe("VacancyCard", () => {
 
   it("applies selected style", () => {
     render(<VacancyCard vacancy={baseVacancy} selected={true} onClick={vi.fn()} />);
-    expect(screen.getByRole("button")).toHaveStyle({ borderColor: expect.anything() });
+    expect(screen.getByRole("button")).toHaveStyle({
+      borderColor: expect.anything(),
+    });
   });
 });
 

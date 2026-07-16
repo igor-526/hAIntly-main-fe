@@ -5,23 +5,7 @@ export type FilterValue = {
   value: string;
 };
 
-export const MULTI_SELECT_PARAMETERS = [
-  "search_field",
-  "area",
-  "metro",
-  "professional_role",
-  "industry",
-  "employer_id",
-  "experience",
-  "employment_form",
-  "education",
-  "work_schedule_by_days",
-  "working_hours",
-  "work_format",
-  "salary_frequency",
-  "label",
-  "driver_license_types",
-] as const;
+export const MULTI_SELECT_PARAMETERS = ["search_field", "area", "metro", "professional_role", "industry", "employer_id", "experience", "employment_form", "education", "work_schedule_by_days", "working_hours", "work_format", "salary_frequency", "label", "driver_license_types"] as const;
 
 export type MultiSelectParameter = (typeof MULTI_SELECT_PARAMETERS)[number];
 

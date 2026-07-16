@@ -1,7 +1,42 @@
-import { afterEach, describe, expect, it, vi } from "vitest"; import { ApiError, apiRequest } from "./main-be";
-describe("api client",()=>{afterEach(()=>vi.unstubAllGlobals());
-it("читает 201 и отправляет cookies",async()=>{const fetch=vi.fn().mockResolvedValue(new Response(JSON.stringify({id:1}),{status:201,headers:{"Content-Type":"application/json"}}));vi.stubGlobal("fetch",fetch);expect(await apiRequest("/x",{method:"POST",body:"{}"})).toEqual({id:1});expect(fetch).toHaveBeenCalledWith("http://main-be.test/x",expect.objectContaining({credentials:"include"}));});
-it("принимает пустой 204",async()=>{vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(null,{status:204})));expect(await apiRequest("/x")).toBeUndefined()});
-it.each([[{detail:"Ошибка"},"Ошибка"],[{detail:[{msg:"Поле неверно"}]},"Поле неверно"]])("нормализует detail",async(body,message)=>{vi.stubGlobal("fetch",vi.fn().mockResolvedValue(new Response(JSON.stringify(body),{status:422})));await expect(apiRequest("/x")).rejects.toThrow(message)});
-it("нормализует network error",async()=>{vi.stubGlobal("fetch",vi.fn().mockRejectedValue(new Error()));await expect(apiRequest("/x")).rejects.toThrow("Не удалось")});
-it("требует конфигурацию",async()=>{const old=process.env.NEXT_PUBLIC_API_BASE_URL;const fetchSpy=vi.fn();vi.stubGlobal("fetch",fetchSpy);delete process.env.NEXT_PUBLIC_API_BASE_URL;await expect(apiRequest("/x")).rejects.toBeInstanceOf(ApiError);expect(fetchSpy).not.toHaveBeenCalled();process.env.NEXT_PUBLIC_API_BASE_URL=old});});
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ApiError, apiRequest } from "./main-be";
+describe("api client", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  it("читает 201 и отправляет cookies", async () => {
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 1 }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetch);
+    expect(await apiRequest("/x", { method: "POST", body: "{}" })).toEqual({
+      id: 1,
+    });
+    expect(fetch).toHaveBeenCalledWith("http://main-be.test/x", expect.objectContaining({ credentials: "include" }));
+  });
+  it("принимает пустой 204", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 204 })));
+    expect(await apiRequest("/x")).toBeUndefined();
+  });
+  it.each([
+    [{ detail: "Ошибка" }, "Ошибка"],
+    [{ detail: [{ msg: "Поле неверно" }] }, "Поле неверно"],
+  ])("нормализует detail", async (body, message) => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(body), { status: 422 })));
+    await expect(apiRequest("/x")).rejects.toThrow(message);
+  });
+  it("нормализует network error", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error()));
+    await expect(apiRequest("/x")).rejects.toThrow("Не удалось");
+  });
+  it("требует конфигурацию", async () => {
+    const old = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    delete process.env.NEXT_PUBLIC_API_BASE_URL;
+    await expect(apiRequest("/x")).rejects.toBeInstanceOf(ApiError);
+    expect(fetchSpy).not.toHaveBeenCalled();
+    process.env.NEXT_PUBLIC_API_BASE_URL = old;
+  });
+});

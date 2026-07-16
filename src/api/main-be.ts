@@ -1,5 +1,11 @@
 export class ApiError extends Error {
-  constructor(message: string, public readonly status?: number) { super(message); this.name = "ApiError"; }
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
 }
 
 function baseUrl() {
@@ -10,11 +16,14 @@ function baseUrl() {
 
 function detailMessage(detail: unknown): string {
   if (typeof detail === "string") return detail;
-  if (Array.isArray(detail)) return detail.map((item) => {
-    if (typeof item === "string") return item;
-    if (item && typeof item === "object" && "msg" in item) return String(item.msg);
-    return "Некорректные данные";
-  }).join("; ");
+  if (Array.isArray(detail))
+    return detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object" && "msg" in item) return String(item.msg);
+        return "Некорректные данные";
+      })
+      .join("; ");
   return "Запрос не выполнен";
 }
 
@@ -22,8 +31,12 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   let response: Response;
   try {
     response = await fetch(`${baseUrl()}${path}`, {
-      ...init, credentials: "include",
-      headers: { ...(init.body ? { "Content-Type": "application/json" } : {}), ...init.headers },
+      ...init,
+      credentials: "include",
+      headers: {
+        ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...init.headers,
+      },
     });
   } catch (error) {
     if (error instanceof ApiError) throw error;
@@ -31,9 +44,13 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   }
   if (!response.ok) {
     let message = "Запрос не выполнен";
-    try { message = detailMessage((await response.json() as { detail?: unknown }).detail); } catch { /* safe fallback */ }
+    try {
+      message = detailMessage(((await response.json()) as { detail?: unknown }).detail);
+    } catch {
+      /* safe fallback */
+    }
     throw new ApiError(message, response.status);
   }
   if (response.status === 204) return undefined;
-  return await response.json() as T;
+  return (await response.json()) as T;
 }
