@@ -16,6 +16,10 @@ function sourceFiles(root: string): SourceFile[] {
 
 describe("направленные зависимости", () => {
   it("принимает текущее дерево src", () => expect(architectureViolations(sourceFiles(process.cwd()))).toEqual([]));
+  it("сохраняет generated type paths Next.js в tracked tsconfig", () => {
+    const tsconfig = JSON.parse(readFileSync(join(process.cwd(), "tsconfig.json"), "utf8")) as { include?: string[] };
+    expect(tsconfig.include).toEqual(expect.arrayContaining([".next/types/**/*.ts", ".next/dev/types/**/*.ts"]));
+  });
   it("отклоняет alias и relative обходы границ, прямой API из UI и внешний source", () => {
     const invalid: SourceFile[] = [
       {
