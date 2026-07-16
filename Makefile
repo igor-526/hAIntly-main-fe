@@ -12,3 +12,10 @@ lint:
 format:
 	npm run format
 	npm run format:check-ignore
+
+#=====OTHER=====#
+dev:
+	npm run dev
+
+build:
+	npm run build

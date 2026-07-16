@@ -9,30 +9,27 @@ env:
   IMAGE: ghcr.io/igor-526/haintly_main-fe
 
 jobs:
-  # test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v6
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
 
-  #     - name: Install deps
-  #       run: npm install
+      - name: Install deps
+        run: npm install
 
-  #     - name: test
-  #       run: npm test
+      - name: test
+        run: make test
 
-  #     - name: lint
-  #       run: npm run lint
+      - name: lint
+        run: make lint
 
-  #     - name: type-check
-  #       run: npx tsc --noEmit
-
-  #     - name: build
-  #       run: npm run build
+      - name: build
+        run: make build
 
   build_deploy:
     runs-on: ubuntu-latest
-    # needs: test
+    needs: test
     permissions:
       contents: read
       packages: write
